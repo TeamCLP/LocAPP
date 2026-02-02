@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Informations Générales - Administration LocApp{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+    <div class="admin-form-section">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Informations Générales</h2>
+            </div>
+
+            <form id="generalForm">
+                <div class="form-group">
+                    <label class="form-label" for="property_name">Nom de la propriété</label>
+                    <input type="text" class="form-control" id="property_name" name="property_name" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="welcome_title">Titre de bienvenue</label>
+                    <input type="text" class="form-control" id="welcome_title" name="welcome_title" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="welcome_message">Message de bienvenue</label>
+                    <input type="text" class="form-control" id="welcome_message" name="welcome_message" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="welcome_description">Description de bienvenue</label>
+                    <textarea class="form-control" id="welcome_description" name="welcome_description" rows="4" required></textarea>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <button type="button" class="btn btn-secondary" onclick="loadData()">Annuler</button>
+                </div>
+            </form>
+
+            <div class="info-box" style="margin-top: 2rem;">
+                <strong>Dernière modification:</strong> <span id="lastUpdate">-</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-preview-section">
+        <p class="preview-title">Aperçu mobile - Accueil</p>
+        <div class="mini-iphone">
+            <div class="iphone-notch"></div>
+            <div class="iphone-screen">
+                <div class="status-bar">
+                    <span>Accueil</span>
+                </div>
+                <div class="app-content">
+                    <div class="preview-content">
+                        <div class="preview-header-banner">
+                            <span>🏡</span>
+                            <strong id="preview-name">Le Mazet de BSA</strong>
+                            <small>Bourg-Saint-Andéol • Ardèche</small>
+                        </div>
+
+                        <div class="preview-welcome">
+                            <h2 id="preview-title">Bienvenue ! 🌿</h2>
+                            <p id="preview-message">Nous sommes ravis de vous accueillir dans notre Mazet.</p>
+                        </div>
+
+                        <div class="preview-card">
+                            <div class="preview-card-header">
+                                <span>✨</span>
+                                <strong>Votre petit coin de paradis</strong>
+                            </div>
+                            <p id="preview-description">En plein cœur de Bourg-Saint-Andéol, notre mazet saura vous charmer...</p>
+                        </div>
+
+                        <div class="preview-section-title">Accès rapide</div>
+                        <div class="preview-quick-grid">
+                            <div class="preview-quick-item">
+                                <span>📶</span>
+                                <strong>WiFi</strong>
+                                <small>Code & connexion</small>
+                            </div>
+                            <div class="preview-quick-item">
+                                <span>🚗</span>
+                                <strong>Parking</strong>
+                                <small>Gratuit à 150m</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updatePreview() {
+    document.getElementById('preview-name').textContent = document.getElementById('property_name').value || 'Le Mazet de BSA';
+    document.getElementById('preview-title').textContent = document.getElementById('welcome_title').value || 'Bienvenue !';
+    document.getElementById('preview-message').textContent = document.getElementById('welcome_message').value || '';
+    document.getElementById('preview-description').textContent = document.getElementById('welcome_description').value || '';
+}
+
+// Update preview on input
+document.querySelectorAll('#generalForm input, #generalForm textarea').forEach(input => {
+    input.addEventListener('input', updatePreview);
+});
+
+async function loadData() {
+    try {
+        const data = await fetchAPI('/api/general');
+        loadDataIntoForm(data, 'generalForm');
+        document.getElementById('lastUpdate').textContent = formatDate(data.updated_at);
+        updatePreview();
+    } catch (error) {
+        showAlert('Erreur lors du chargement des données', 'error');
+    }
+}
+
+document.getElementById('generalForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    const formData = getFormData('generalForm');
+
+    try {
+        const response = await fetch('/api/general', {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert(result.message, 'success');
+            loadData();
+        } else {
+            showAlert('Erreur: ' + (result.error || 'Échec de la mise à jour'), 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de connexion', 'error');
+    }
+});
+
+loadData();
+</script>
+{% endblock %}

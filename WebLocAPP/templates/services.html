@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+
+{% block title %}Services - Administration LocApp{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+    <div class="admin-form-section">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Services à proximité</h2>
+                <button class="btn btn-primary" onclick="openAddModal()">Ajouter un service</button>
+            </div>
+
+            <div id="servicesTable">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-preview-section">
+        <p class="preview-title">Aperçu mobile - Services</p>
+        <div class="mini-iphone">
+            <div class="iphone-notch"></div>
+            <div class="iphone-screen">
+                <div class="status-bar">
+                    <span>Infos Pratiques</span>
+                </div>
+                <div class="app-content">
+                    <div class="preview-content">
+                        <div class="preview-section-title">Services à proximité</div>
+
+                        <div id="preview-services">
+                            <div class="preview-card">
+                                <div class="preview-row">
+                                    <span class="preview-row-icon">💊</span>
+                                    <div class="preview-row-content">
+                                        <strong>Pharmacie du Rhône</strong>
+                                        <small>Place du Champ de Mars</small>
+                                    </div>
+                                </div>
+                                <div class="preview-row">
+                                    <span class="preview-row-icon">🏥</span>
+                                    <div class="preview-row-content">
+                                        <strong>Maison de Santé</strong>
+                                        <small>Avenue Paul Lafargue</small>
+                                    </div>
+                                </div>
+                                <div class="preview-row">
+                                    <span class="preview-row-icon">🛒</span>
+                                    <div class="preview-row-content">
+                                        <strong>Intermarché</strong>
+                                        <small>ZAC des Faysses</small>
+                                    </div>
+                                </div>
+                                <div class="preview-row">
+                                    <span class="preview-row-icon">🥖</span>
+                                    <div class="preview-row-content">
+                                        <strong>Boulangerie</strong>
+                                        <small>Place du Champ de Mars</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="preview-card" style="background: #eff6ff; margin-top: 12px;">
+                            <div class="preview-card-header">
+                                <span>💡</span>
+                                <strong>Conseil</strong>
+                            </div>
+                            <p>Tous les commerces essentiels sont accessibles à pied depuis le mazet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Add/Edit Service -->
+<div id="serviceModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">Ajouter un service</h3>
+            <button class="modal-close" onclick="closeModal('serviceModal')">&times;</button>
+        </div>
+
+        <form id="serviceForm">
+            <input type="hidden" id="service_id" name="id">
+
+            <div class="form-group">
+                <label class="form-label" for="name">Nom du service</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="category">Catégorie</label>
+                <select class="form-control" id="category" name="category" required onchange="updateCategoryIcon()">
+                    <option value="">Sélectionnez une catégorie</option>
+                    <option value="pharmacy">💊 Pharmacie</option>
+                    <option value="doctor">🏥 Médecin</option>
+                    <option value="supermarket">🛒 Supermarché</option>
+                    <option value="bakery">🥖 Boulangerie</option>
+                    <option value="restaurant">🍽️ Restaurant</option>
+                    <option value="bank">🏦 Banque</option>
+                    <option value="gas_station">⛽ Station essence</option>
+                    <option value="post">📫 Poste</option>
+                    <option value="other">📍 Autre</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="icon">Icône personnalisée (optionnel)</label>
+                <div class="emoji-input-wrapper">
+                    <input type="text" class="form-control emoji-input" id="icon" name="icon" readonly placeholder="Par défaut selon catégorie">
+                    <button type="button" class="emoji-trigger" id="iconTrigger" onclick="openEmojiPicker('icon', this)">📍</button>
+                </div>
+                <small style="color: #9ca3af; font-size: 0.75rem;">Laissez vide pour utiliser l'icône de la catégorie</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="address">Adresse</label>
+                <textarea class="form-control" id="address" name="address" rows="2" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="phone">Téléphone</label>
+                <input type="tel" class="form-control" id="phone" name="phone">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="description">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="opening_hours">Horaires d'ouverture</label>
+                <input type="text" class="form-control" id="opening_hours" name="opening_hours" placeholder="Lun-Sam: 8h-19h">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="display_order">Ordre d'affichage</label>
+                <input type="number" class="form-control" id="display_order" name="display_order" value="0">
+            </div>
+
+            <div class="btn-group">
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('serviceModal')">Annuler</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/emoji-picker.js') }}"></script>
+<script>
+let services = [];
+
+const categoryIcons = {
+    'pharmacy': '💊',
+    'doctor': '🏥',
+    'supermarket': '🛒',
+    'bakery': '🥖',
+    'restaurant': '🍽️',
+    'bank': '🏦',
+    'gas_station': '⛽',
+    'post': '📫',
+    'other': '📍'
+};
+
+function updateCategoryIcon() {
+    const category = document.getElementById('category').value;
+    const iconTrigger = document.getElementById('iconTrigger');
+    const iconInput = document.getElementById('icon');
+
+    // Only update if icon field is empty
+    if (!iconInput.value && iconTrigger) {
+        iconTrigger.textContent = categoryIcons[category] || '📍';
+    }
+}
+
+async function loadServices() {
+    try {
+        services = await fetchAPI('/api/services');
+        renderServices();
+        updatePreview();
+    } catch (error) {
+        showAlert('Erreur lors du chargement des services', 'error');
+    }
+}
+
+function updatePreview() {
+    const previewContainer = document.getElementById('preview-services');
+
+    if (services.length === 0) {
+        previewContainer.innerHTML = '<p style="text-align: center; font-size: 9px; color: #9ca3af;">Aucun service configuré</p>';
+        return;
+    }
+
+    let html = '<div class="preview-card">';
+    services.slice(0, 5).forEach(service => {
+        const icon = service.icon || categoryIcons[service.category] || '📍';
+        html += `
+            <div class="preview-row">
+                <span class="preview-row-icon">${icon}</span>
+                <div class="preview-row-content">
+                    <strong>${service.name}</strong>
+                    <small>${service.address ? service.address.split(',')[0] : ''}</small>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    previewContainer.innerHTML = html;
+}
+
+function renderServices() {
+    const container = document.getElementById('servicesTable');
+
+    if (services.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🏪</div>
+                <div class="empty-state-text">Aucun service</div>
+            </div>
+        `;
+        return;
+    }
+
+    let html = `
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Catégorie</th>
+                    <th>Adresse</th>
+                    <th>Téléphone</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    services.forEach(service => {
+        const icon = service.icon || categoryIcons[service.category] || '📍';
+        html += `
+            <tr>
+                <td>${icon} ${service.name}</td>
+                <td><span class="badge badge-primary">${service.category}</span></td>
+                <td>${service.address || '-'}</td>
+                <td>${service.phone || '-'}</td>
+                <td class="action-buttons">
+                    <button class="btn btn-sm btn-primary" onclick="editService(${service.id})">Modifier</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteService(${service.id})">Supprimer</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `
+            </tbody>
+        </table>
+    `;
+
+    container.innerHTML = html;
+}
+
+function openAddModal() {
+    document.getElementById('modalTitle').textContent = 'Ajouter un service';
+    document.getElementById('serviceForm').reset();
+    document.getElementById('service_id').value = '';
+
+    // Reset icon trigger
+    const iconTrigger = document.getElementById('iconTrigger');
+    if (iconTrigger) {
+        iconTrigger.textContent = '📍';
+    }
+
+    openModal('serviceModal');
+}
+
+async function editService(id) {
+    const service = services.find(s => s.id === id);
+    if (!service) return;
+
+    document.getElementById('modalTitle').textContent = 'Modifier le service';
+    document.getElementById('service_id').value = service.id;
+    loadDataIntoForm(service, 'serviceForm');
+
+    // Update icon trigger
+    const iconTrigger = document.getElementById('iconTrigger');
+    if (iconTrigger) {
+        iconTrigger.textContent = service.icon || categoryIcons[service.category] || '📍';
+    }
+
+    openModal('serviceModal');
+}
+
+async function deleteService(id) {
+    if (!confirmAction('Êtes-vous sûr de vouloir supprimer ce service ?')) {
+        return;
+    }
+
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    try {
+        const response = await fetch(`/api/services/${id}`, {
+            method: 'DELETE',
+            headers: headers
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert(result.message, 'success');
+            loadServices();
+        } else {
+            showAlert('Erreur: ' + (result.error || 'Échec de la suppression'), 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de connexion', 'error');
+    }
+}
+
+document.getElementById('serviceForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    const formData = getFormData('serviceForm');
+    const serviceId = document.getElementById('service_id').value;
+
+    const url = serviceId ? `/api/services/${serviceId}` : '/api/services';
+    const method = serviceId ? 'PUT' : 'POST';
+
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: headers,
+            body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert(result.message, 'success');
+            closeModal('serviceModal');
+            loadServices();
+        } else {
+            showAlert('Erreur: ' + (result.error || 'Échec de l\'opération'), 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de connexion', 'error');
+    }
+});
+
+loadServices();
+</script>
+{% endblock %}

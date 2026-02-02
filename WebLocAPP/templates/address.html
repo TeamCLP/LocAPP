@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Adresse - Administration LocApp{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+    <div class="admin-form-section">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Adresse de la propriété</h2>
+            </div>
+
+            <form id="addressForm">
+                <div class="form-group">
+                    <label class="form-label" for="street">Rue</label>
+                    <input type="text" class="form-control" id="street" name="street" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="postal_code">Code postal</label>
+                    <input type="text" class="form-control" id="postal_code" name="postal_code" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="city">Ville</label>
+                    <input type="text" class="form-control" id="city" name="city" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="country">Pays</label>
+                    <input type="text" class="form-control" id="country" name="country" value="France" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="description">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <button type="button" class="btn btn-secondary" onclick="loadData()">Annuler</button>
+                </div>
+            </form>
+
+            <div class="info-box" style="margin-top: 2rem;">
+                <strong>Dernière modification:</strong> <span id="lastUpdate">-</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-preview-section">
+        <p class="preview-title">Aperçu mobile - Adresse</p>
+        <div class="mini-iphone">
+            <div class="iphone-notch"></div>
+            <div class="iphone-screen">
+                <div class="status-bar">
+                    <span>Infos Pratiques</span>
+                </div>
+                <div class="app-content">
+                    <div class="preview-content">
+                        <div class="preview-section-title">Localisation</div>
+                        <div class="preview-card">
+                            <div class="preview-row">
+                                <span class="preview-row-icon">📍</span>
+                                <div class="preview-row-content">
+                                    <strong>Adresse</strong>
+                                    <small id="preview-street">1 Chemin de sainte croix</small>
+                                </div>
+                            </div>
+                            <div class="preview-row">
+                                <span class="preview-row-icon">🏘️</span>
+                                <div class="preview-row-content">
+                                    <strong>Ville</strong>
+                                    <small><span id="preview-postal">07700</span> <span id="preview-city">Bourg-Saint-Andéol</span></small>
+                                </div>
+                            </div>
+                            <div class="preview-row">
+                                <span class="preview-row-icon">🌍</span>
+                                <div class="preview-row-content">
+                                    <strong>Pays</strong>
+                                    <small id="preview-country">France</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="preview-card" style="background: #f0fdf4;">
+                            <div class="preview-card-header">
+                                <span>🗺️</span>
+                                <strong>Comment s'y rendre</strong>
+                            </div>
+                            <p id="preview-description">Le mazet se situe en plein cœur de Bourg-Saint-Andéol...</p>
+                        </div>
+
+                        <div class="preview-card" style="text-align: center; padding: 16px;">
+                            <span style="font-size: 48px;">🗺️</span>
+                            <p style="font-size: 9px; color: #6b7280; margin-top: 8px;">Ouvrir dans Maps</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updatePreview() {
+    document.getElementById('preview-street').textContent = document.getElementById('street').value || 'Adresse';
+    document.getElementById('preview-postal').textContent = document.getElementById('postal_code').value || '';
+    document.getElementById('preview-city').textContent = document.getElementById('city').value || 'Ville';
+    document.getElementById('preview-country').textContent = document.getElementById('country').value || 'France';
+    document.getElementById('preview-description').textContent = document.getElementById('description').value || '';
+}
+
+document.querySelectorAll('#addressForm input, #addressForm textarea').forEach(input => {
+    input.addEventListener('input', updatePreview);
+});
+
+async function loadData() {
+    try {
+        const data = await fetchAPI('/api/address');
+        loadDataIntoForm(data, 'addressForm');
+        document.getElementById('lastUpdate').textContent = formatDate(data.updated_at);
+        updatePreview();
+    } catch (error) {
+        showAlert('Erreur lors du chargement des données', 'error');
+    }
+}
+
+document.getElementById('addressForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    const formData = getFormData('addressForm');
+
+    try {
+        const response = await fetch('/api/address', {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert(result.message, 'success');
+            loadData();
+        } else {
+            showAlert('Erreur: ' + (result.error || 'Échec de la mise à jour'), 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de connexion', 'error');
+    }
+});
+
+loadData();
+</script>
+{% endblock %}

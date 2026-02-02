@@ -1,0 +1,505 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil - Administration LocApp{% endblock %}
+
+{% block content %}
+<div class="simulator-page">
+    <div class="simulator-header">
+        <h1>Aperçu de l'application</h1>
+        <p>Visualisez l'application mobile telle que vos locataires la verront</p>
+    </div>
+
+    <div class="simulator-container">
+        <!-- iPhone Frame -->
+        <div class="iphone-frame">
+            <!-- Notch -->
+            <div class="iphone-notch"></div>
+
+            <!-- Screen -->
+            <div class="iphone-screen">
+                <!-- Status Bar -->
+                <div class="status-bar">
+                    <span id="status-title">Accueil</span>
+                </div>
+
+                <!-- Content Area -->
+                <div class="app-content">
+                    <!-- Accueil Tab -->
+                    <div id="tab-accueil" class="tab-content active">
+                        <div class="app-header-card">
+                            <div class="header-decoration">
+                                <span class="deco-icon top-right">🌿</span>
+                                <span class="deco-icon bottom-left">🏛️</span>
+                            </div>
+                            <span class="header-icon">🏡</span>
+                            <span class="header-title" id="property-name">Le Mazet de BSA</span>
+                            <span class="header-subtitle" id="property-location">Bourg-Saint-Andéol • Ardèche</span>
+                        </div>
+
+                        <div class="welcome-section">
+                            <h1>Bienvenue ! 🌿</h1>
+                            <p id="welcome-message">Nous sommes ravis de vous accueillir dans notre Mazet.</p>
+                        </div>
+
+                        <div class="info-card">
+                            <div class="info-card-header">
+                                <span>✨</span>
+                                <span>Votre petit coin de paradis</span>
+                            </div>
+                            <p id="property-description">En plein cœur de Bourg-Saint-Andéol, notre mazet saura vous charmer avec ses vieilles pierres et ses poutres apparentes.</p>
+                            <div class="tags">
+                                <span class="tag">🏛️ Pierres</span>
+                                <span class="tag">📏 Poutres</span>
+                                <span class="tag">❤️ Charme</span>
+                            </div>
+                        </div>
+
+                        <div class="section">
+                            <h3>Accès rapide</h3>
+                            <div class="quick-access-grid">
+                                <div class="quick-item blue">
+                                    <span>📶</span>
+                                    <strong>WiFi</strong>
+                                    <small>Code & connexion</small>
+                                </div>
+                                <div class="quick-item green">
+                                    <span>🚗</span>
+                                    <strong>Parking</strong>
+                                    <small id="parking-info">Gratuit à 150m</small>
+                                </div>
+                                <div class="quick-item red">
+                                    <span>📍</span>
+                                    <strong>Adresse</strong>
+                                    <small>Centre-ville BSA</small>
+                                </div>
+                                <div class="quick-item orange">
+                                    <span>🆘</span>
+                                    <strong>Urgences</strong>
+                                    <small>Numéros utiles</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section">
+                            <h3>À découvrir</h3>
+                            <div class="discover-scroll" id="highlights-list">
+                                <div class="discover-item">
+                                    <span>🏞️</span>
+                                    <strong>Gorges</strong>
+                                    <small>15 min</small>
+                                </div>
+                                <div class="discover-item">
+                                    <span>🌉</span>
+                                    <strong>Pont d'Arc</strong>
+                                    <small>20 min</small>
+                                </div>
+                                <div class="discover-item">
+                                    <span>🦴</span>
+                                    <strong>Grotte Chauvet</strong>
+                                    <small>25 min</small>
+                                </div>
+                                <div class="discover-item">
+                                    <span>🐊</span>
+                                    <strong>Crocodiles</strong>
+                                    <small>15 min</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Infos Tab -->
+                    <div id="tab-infos" class="tab-content">
+                        <div class="info-section">
+                            <h4>Connexion Internet</h4>
+                            <div class="info-list">
+                                <div class="info-row">
+                                    <span class="info-icon">📶</span>
+                                    <div class="info-text">
+                                        <strong>WiFi</strong>
+                                        <small id="wifi-name">Réseau & mot de passe</small>
+                                    </div>
+                                    <span class="arrow">›</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-section">
+                            <h4>Accès au Mazet</h4>
+                            <div class="info-list">
+                                <div class="info-row">
+                                    <span class="info-icon">📍</span>
+                                    <div class="info-text">
+                                        <strong>Adresse</strong>
+                                        <small id="address-info">Centre-ville de BSA</small>
+                                    </div>
+                                    <span class="arrow">›</span>
+                                </div>
+                                <div class="info-row border">
+                                    <span class="info-icon">🚗</span>
+                                    <div class="info-text">
+                                        <strong>Parking</strong>
+                                        <small id="parking-detail">Gratuit à 150m</small>
+                                    </div>
+                                    <span class="arrow">›</span>
+                                </div>
+                                <div class="info-row border">
+                                    <span class="info-icon">🔑</span>
+                                    <div class="info-text">
+                                        <strong>Clés & Accès</strong>
+                                        <small id="access-info">Arrivée / Départ</small>
+                                    </div>
+                                    <span class="arrow">›</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-section">
+                            <h4>Équipements</h4>
+                            <div class="info-list">
+                                <div class="info-row">
+                                    <span class="info-icon">🛏️</span>
+                                    <div class="info-text">
+                                        <strong>Literie</strong>
+                                        <small>Lits faits à l'arrivée</small>
+                                    </div>
+                                    <span class="arrow">›</span>
+                                </div>
+                                <div class="info-row border">
+                                    <span class="info-icon">🚿</span>
+                                    <div class="info-text">
+                                        <strong>Serviettes</strong>
+                                        <small>Fournies</small>
+                                    </div>
+                                    <span class="arrow">›</span>
+                                </div>
+                                <div class="info-row border">
+                                    <span class="info-icon">🍳</span>
+                                    <div class="info-text">
+                                        <strong>Cuisine</strong>
+                                        <small>Tout équipée</small>
+                                    </div>
+                                    <span class="arrow">›</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-section">
+                            <h4>Urgences</h4>
+                            <div class="info-list" id="emergency-list">
+                                <div class="info-row">
+                                    <span class="info-icon">🚑</span>
+                                    <div class="info-text">
+                                        <strong>SAMU</strong>
+                                        <small>15</small>
+                                    </div>
+                                    <span class="arrow">›</span>
+                                </div>
+                                <div class="info-row border">
+                                    <span class="info-icon">🚒</span>
+                                    <div class="info-text">
+                                        <strong>Pompiers</strong>
+                                        <small>18</small>
+                                    </div>
+                                    <span class="arrow">›</span>
+                                </div>
+                                <div class="info-row border">
+                                    <span class="info-icon">👮</span>
+                                    <div class="info-text">
+                                        <strong>Police</strong>
+                                        <small>17</small>
+                                    </div>
+                                    <span class="arrow">›</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Activités Tab -->
+                    <div id="tab-activites" class="tab-content">
+                        <div class="activities-header">
+                            <h2>Découvrez l'Ardèche 🌿</h2>
+                            <p>Nos recommandations autour de BSA</p>
+                        </div>
+
+                        <div id="activities-list">
+                            <div class="activity-card">
+                                <div class="activity-header">
+                                    <span>⭐</span>
+                                    <strong>Incontournables</strong>
+                                </div>
+                                <div class="activity-tags">
+                                    <span>Gorges de l'Ardèche</span>
+                                    <span>Pont d'Arc</span>
+                                    <span>Grotte Chauvet</span>
+                                </div>
+                            </div>
+
+                            <div class="activity-card">
+                                <div class="activity-header">
+                                    <span>🏊</span>
+                                    <strong>Baignade & Kayak</strong>
+                                </div>
+                                <div class="activity-tags">
+                                    <span>Descente en canoë</span>
+                                    <span>Plages de l'Ardèche</span>
+                                </div>
+                            </div>
+
+                            <div class="activity-card">
+                                <div class="activity-header">
+                                    <span>🏛️</span>
+                                    <strong>Villes à visiter</strong>
+                                </div>
+                                <div class="activity-tags">
+                                    <span>Montélimar</span>
+                                    <span>Orange</span>
+                                    <span>Avignon</span>
+                                </div>
+                            </div>
+
+                            <div class="activity-card">
+                                <div class="activity-header">
+                                    <span>🧺</span>
+                                    <strong>Marchés</strong>
+                                </div>
+                                <div class="activity-tags">
+                                    <span>BSA (samedi)</span>
+                                    <span>Pierrelatte (mardi)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="specialties-card">
+                            <p><strong>🍯 Spécialités à goûter</strong></p>
+                            <div class="specialty-tags">
+                                <span>🧀 Picodon</span>
+                                <span>🍬 Nougat</span>
+                                <span>🌰 Châtaignes</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Tab -->
+                    <div id="tab-contact" class="tab-content">
+                        <div class="contact-avatar">
+                            <div class="avatar-circle">
+                                <span>👤</span>
+                            </div>
+                            <h2>Votre hôte</h2>
+                            <p>À votre service pour un séjour parfait</p>
+                        </div>
+
+                        <div class="contact-buttons" id="contact-buttons">
+                            <div class="contact-btn">
+                                <span class="contact-icon green">📞</span>
+                                <div class="contact-text">
+                                    <strong>Appeler</strong>
+                                    <small id="contact-phone">06 XX XX XX XX</small>
+                                </div>
+                                <span class="arrow">›</span>
+                            </div>
+
+                            <div class="contact-btn">
+                                <span class="contact-icon blue">💬</span>
+                                <div class="contact-text">
+                                    <strong>SMS</strong>
+                                    <small>Réponse rapide</small>
+                                </div>
+                                <span class="arrow">›</span>
+                            </div>
+
+                            <div class="contact-btn">
+                                <span class="contact-icon whatsapp">📱</span>
+                                <div class="contact-text">
+                                    <strong>WhatsApp</strong>
+                                    <small>Disponible 7j/7</small>
+                                </div>
+                                <span class="arrow">›</span>
+                            </div>
+
+                            <div class="contact-btn">
+                                <span class="contact-icon orange">✉️</span>
+                                <div class="contact-text">
+                                    <strong>Email</strong>
+                                    <small id="contact-email">votre@email.com</small>
+                                </div>
+                                <span class="arrow">›</span>
+                            </div>
+                        </div>
+
+                        <div class="airbnb-card">
+                            <span>🏠</span>
+                            <p><strong>Messagerie Airbnb</strong></p>
+                            <small>Contactez-nous aussi via l'app</small>
+                        </div>
+
+                        <div class="tip-card">
+                            <span>💡</span>
+                            <p>Questions non urgentes → SMS/WhatsApp<br>Urgences → Appelez directement</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Bar -->
+                <div class="tab-bar">
+                    <button class="tab-btn active" data-tab="accueil">
+                        <span>🏠</span>
+                        <small>Accueil</small>
+                    </button>
+                    <button class="tab-btn" data-tab="infos">
+                        <span>ℹ️</span>
+                        <small>Infos</small>
+                    </button>
+                    <button class="tab-btn" data-tab="activites">
+                        <span>⭐</span>
+                        <small>Activités</small>
+                    </button>
+                    <button class="tab-btn" data-tab="contact">
+                        <span>✉️</span>
+                        <small>Contact</small>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="export-section">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Export des données</h2>
+            </div>
+            <div class="info-box">
+                <strong>Export JSON</strong> - Exportez toutes les données pour l'application iOS
+            </div>
+            <button onclick="downloadExport()" class="btn btn-success">Télécharger l'export JSON</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Tab navigation
+const tabBtns = document.querySelectorAll('.tab-btn');
+const tabContents = document.querySelectorAll('.tab-content');
+const statusTitle = document.getElementById('status-title');
+
+const tabTitles = {
+    'accueil': 'Accueil',
+    'infos': 'Infos Pratiques',
+    'activites': 'Activités',
+    'contact': 'Contact'
+};
+
+tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+
+        btn.classList.add('active');
+        document.getElementById(`tab-${tab}`).classList.add('active');
+        statusTitle.textContent = tabTitles[tab];
+    });
+});
+
+// Load data from API
+async function loadAppData() {
+    try {
+        const [general, wifi, address, parking, access, contact, activities, emergency] = await Promise.all([
+            fetch('/api/general').then(r => r.json()).catch(() => ({})),
+            fetch('/api/wifi').then(r => r.json()).catch(() => ({})),
+            fetch('/api/address').then(r => r.json()).catch(() => ({})),
+            fetch('/api/parking').then(r => r.json()).catch(() => ({})),
+            fetch('/api/access').then(r => r.json()).catch(() => ({})),
+            fetch('/api/contact').then(r => r.json()).catch(() => ({})),
+            fetch('/api/activities').then(r => r.json()).catch(() => []),
+            fetch('/api/emergency').then(r => r.json()).catch(() => [])
+        ]);
+
+        // Update general info
+        if (general.property_name) {
+            document.getElementById('property-name').textContent = general.property_name;
+        }
+        if (general.location) {
+            document.getElementById('property-location').textContent = general.location;
+        }
+        if (general.welcome_message) {
+            document.getElementById('welcome-message').textContent = general.welcome_message;
+        }
+        if (general.description) {
+            document.getElementById('property-description').textContent = general.description;
+        }
+
+        // Update WiFi
+        if (wifi.ssid) {
+            document.getElementById('wifi-name').textContent = wifi.ssid;
+        }
+
+        // Update address
+        if (address.street) {
+            document.getElementById('address-info').textContent = address.street;
+        }
+
+        // Update parking
+        if (parking.description) {
+            document.getElementById('parking-info').textContent = parking.description;
+            document.getElementById('parking-detail').textContent = parking.description;
+        }
+
+        // Update access
+        if (access.check_in || access.check_out) {
+            document.getElementById('access-info').textContent = `${access.check_in || '15h'} / ${access.check_out || '11h'}`;
+        }
+
+        // Update contact
+        if (contact.phone) {
+            document.getElementById('contact-phone').textContent = contact.phone;
+        }
+        if (contact.email) {
+            document.getElementById('contact-email').textContent = contact.email;
+        }
+
+    } catch (error) {
+        console.error('Error loading app data:', error);
+    }
+}
+
+// Export function
+function downloadExport() {
+    const username = prompt('Nom d\'utilisateur:');
+    const password = prompt('Mot de passe:');
+
+    if (!username || !password) return;
+
+    fetch('/api/export/download', {
+        headers: {
+            'Authorization': 'Basic ' + btoa(username + ':' + password)
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.blob();
+        }
+        throw new Error('Authentification échouée');
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'locapp_data.json';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        showAlert('Export téléchargé avec succès', 'success');
+    })
+    .catch(error => {
+        showAlert('Erreur: ' + error.message, 'error');
+    });
+}
+
+// Load data on page load
+loadAppData();
+</script>
+{% endblock %}

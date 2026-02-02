@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Contact - Administration LocApp{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+    <div class="admin-form-section">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Informations de Contact</h2>
+            </div>
+
+            <form id="contactForm">
+                <div class="form-group">
+                    <label class="form-label" for="host_name">Nom de l'hôte</label>
+                    <input type="text" class="form-control" id="host_name" name="host_name" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="phone">Téléphone</label>
+                    <input type="tel" class="form-control" id="phone" name="phone" placeholder="+33688461607" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="whatsapp">WhatsApp</label>
+                    <input type="text" class="form-control" id="whatsapp" name="whatsapp" placeholder="33688461607">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="airbnb_url">URL Airbnb</label>
+                    <input type="url" class="form-control" id="airbnb_url" name="airbnb_url">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="description">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="2" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="response_time">Temps de réponse</label>
+                    <input type="text" class="form-control" id="response_time" name="response_time" placeholder="Je réponds généralement dans l'heure">
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <button type="button" class="btn btn-secondary" onclick="loadData()">Annuler</button>
+                </div>
+            </form>
+
+            <div class="info-box" style="margin-top: 2rem;">
+                <strong>Dernière modification:</strong> <span id="lastUpdate">-</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-preview-section">
+        <p class="preview-title">Aperçu mobile - Contact</p>
+        <div class="mini-iphone">
+            <div class="iphone-notch"></div>
+            <div class="iphone-screen">
+                <div class="status-bar">
+                    <span>Contact</span>
+                </div>
+                <div class="app-content">
+                    <div class="preview-content">
+                        <div style="text-align: center; margin-bottom: 16px;">
+                            <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #fed7aa 0%, #fef08a 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto 8px;">
+                                <span style="font-size: 28px;">👤</span>
+                            </div>
+                            <strong style="font-size: 12px;" id="preview-name">Votre hôte</strong>
+                            <p style="font-size: 8px; color: #6b7280;" id="preview-desc">À votre service pour un séjour parfait</p>
+                        </div>
+
+                        <div class="preview-contact-btn">
+                            <span class="preview-contact-icon green">📞</span>
+                            <div class="preview-contact-text">
+                                <strong>Appeler</strong>
+                                <small id="preview-phone">+33688461607</small>
+                            </div>
+                        </div>
+
+                        <div class="preview-contact-btn">
+                            <span class="preview-contact-icon blue">💬</span>
+                            <div class="preview-contact-text">
+                                <strong>SMS / WhatsApp</strong>
+                                <small id="preview-whatsapp">Disponible 7j/7</small>
+                            </div>
+                        </div>
+
+                        <div class="preview-contact-btn">
+                            <span class="preview-contact-icon orange">✉️</span>
+                            <div class="preview-contact-text">
+                                <strong>Email</strong>
+                                <small id="preview-email">solex07700@gmail.com</small>
+                            </div>
+                        </div>
+
+                        <div class="preview-card" style="background: #fef2f2; margin-top: 12px; text-align: center;">
+                            <span style="font-size: 16px;">🏠</span>
+                            <p style="font-size: 10px; color: #b91c1c; margin-top: 4px;"><strong>Messagerie Airbnb</strong></p>
+                            <p style="font-size: 8px; color: #ef4444;" id="preview-response">Je réponds généralement dans l'heure</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updatePreview() {
+    document.getElementById('preview-name').textContent = document.getElementById('host_name').value || 'Votre hôte';
+    document.getElementById('preview-phone').textContent = document.getElementById('phone').value || 'Téléphone';
+    document.getElementById('preview-email').textContent = document.getElementById('email').value || 'Email';
+    document.getElementById('preview-whatsapp').textContent = document.getElementById('whatsapp').value ? 'Disponible 7j/7' : 'Non configuré';
+    document.getElementById('preview-desc').textContent = document.getElementById('description').value || '';
+    document.getElementById('preview-response').textContent = document.getElementById('response_time').value || '';
+}
+
+document.querySelectorAll('#contactForm input, #contactForm textarea').forEach(input => {
+    input.addEventListener('input', updatePreview);
+});
+
+async function loadData() {
+    try {
+        const data = await fetchAPI('/api/contact');
+        loadDataIntoForm(data, 'contactForm');
+        document.getElementById('lastUpdate').textContent = formatDate(data.updated_at);
+        updatePreview();
+    } catch (error) {
+        showAlert('Erreur lors du chargement des données', 'error');
+    }
+}
+
+document.getElementById('contactForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    const formData = getFormData('contactForm');
+
+    try {
+        const response = await fetch('/api/contact', {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert(result.message, 'success');
+            loadData();
+        } else {
+            showAlert('Erreur: ' + (result.error || 'Échec de la mise à jour'), 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de connexion', 'error');
+    }
+});
+
+loadData();
+</script>
+{% endblock %}

@@ -1,0 +1,372 @@
+{% extends "base.html" %}
+
+{% block title %}Activités - Administration LocApp{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+    <div class="admin-form-section">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Gestion des Activités</h2>
+                <button class="btn btn-primary" onclick="openAddModal()">Ajouter une activité</button>
+            </div>
+
+            <div id="activitiesTable">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-preview-section">
+        <p class="preview-title">Aperçu mobile - Activités</p>
+        <div class="mini-iphone">
+            <div class="iphone-notch"></div>
+            <div class="iphone-screen">
+                <div class="status-bar">
+                    <span>Activités</span>
+                </div>
+                <div class="app-content">
+                    <div class="preview-content">
+                        <div style="text-align: center; margin-bottom: 12px;">
+                            <strong style="font-size: 12px;">Découvrez l'Ardèche 🌿</strong>
+                            <p style="font-size: 8px; color: #6b7280;">Nos recommandations autour de BSA</p>
+                        </div>
+
+                        <div id="preview-activities">
+                            <div class="preview-card">
+                                <div class="preview-card-header">
+                                    <span>⭐</span>
+                                    <strong>Incontournables</strong>
+                                </div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
+                                    <span style="font-size: 8px; background: #f3f4f6; padding: 2px 6px; border-radius: 8px;">Gorges de l'Ardèche</span>
+                                    <span style="font-size: 8px; background: #f3f4f6; padding: 2px 6px; border-radius: 8px;">Pont d'Arc</span>
+                                </div>
+                            </div>
+
+                            <div class="preview-card">
+                                <div class="preview-card-header">
+                                    <span>🏊</span>
+                                    <strong>Baignade & Kayak</strong>
+                                </div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
+                                    <span style="font-size: 8px; background: #f3f4f6; padding: 2px 6px; border-radius: 8px;">Canoë</span>
+                                    <span style="font-size: 8px; background: #f3f4f6; padding: 2px 6px; border-radius: 8px;">Plages</span>
+                                </div>
+                            </div>
+
+                            <div class="preview-card">
+                                <div class="preview-card-header">
+                                    <span>🏛️</span>
+                                    <strong>Villes à visiter</strong>
+                                </div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
+                                    <span style="font-size: 8px; background: #f3f4f6; padding: 2px 6px; border-radius: 8px;">Montélimar</span>
+                                    <span style="font-size: 8px; background: #f3f4f6; padding: 2px 6px; border-radius: 8px;">Avignon</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="preview-card" style="background: #fffbeb; margin-top: 12px;">
+                            <div class="preview-card-header">
+                                <span>🍯</span>
+                                <strong>Spécialités</strong>
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
+                                <span style="font-size: 8px; background: #fef3c7; color: #b45309; padding: 2px 6px; border-radius: 8px;">🧀 Picodon</span>
+                                <span style="font-size: 8px; background: #fef3c7; color: #b45309; padding: 2px 6px; border-radius: 8px;">🍬 Nougat</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Add/Edit Activity -->
+<div id="activityModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">Ajouter une activité</h3>
+            <button class="modal-close" onclick="closeModal('activityModal')">&times;</button>
+        </div>
+
+        <form id="activityForm">
+            <input type="hidden" id="activity_id" name="id">
+
+            <div class="form-group">
+                <label class="form-label" for="name">Nom de l'activité</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="category">Catégorie</label>
+                <select class="form-control" id="category" name="category" required>
+                    <option value="">Sélectionnez une catégorie</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="description">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="emoji">Emoji</label>
+                <div class="emoji-input-wrapper">
+                    <input type="text" class="form-control emoji-input" id="emoji" name="emoji" readonly placeholder="Cliquez pour choisir" required>
+                    <button type="button" class="emoji-trigger" onclick="openEmojiPicker('emoji', this)">🏞️</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="distance">Distance</label>
+                <input type="text" class="form-control" id="distance" name="distance" placeholder="15 min" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="display_order">Ordre d'affichage</label>
+                <input type="number" class="form-control" id="display_order" name="display_order" value="0">
+            </div>
+
+            <div class="btn-group">
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('activityModal')">Annuler</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/emoji-picker.js') }}"></script>
+<script>
+let activities = [];
+let categories = [];
+
+const categoryIcons = {
+    'Incontournables': '⭐',
+    'Baignade & Kayak': '🏊',
+    'Villes à visiter': '🏛️',
+    'Nature & Randonnées': '🌿',
+    'Marchés provençaux': '🧺',
+    'Gastronomie': '🍽️',
+    'Culture': '📚'
+};
+
+async function loadCategories() {
+    try {
+        categories = await fetchAPI('/api/activity-categories');
+        const categorySelect = document.getElementById('category');
+        categorySelect.innerHTML = '<option value="">Sélectionnez une catégorie</option>';
+        categories.forEach(cat => {
+            categorySelect.innerHTML += `<option value="${cat.name}">${cat.name}</option>`;
+        });
+    } catch (error) {
+        showAlert('Erreur lors du chargement des catégories', 'error');
+    }
+}
+
+async function loadActivities() {
+    try {
+        activities = await fetchAPI('/api/activities');
+        renderActivities();
+        updatePreview();
+    } catch (error) {
+        showAlert('Erreur lors du chargement des activités', 'error');
+    }
+}
+
+function updatePreview() {
+    const previewContainer = document.getElementById('preview-activities');
+
+    // Group by category
+    const grouped = {};
+    activities.forEach(activity => {
+        if (!grouped[activity.category]) {
+            grouped[activity.category] = [];
+        }
+        grouped[activity.category].push(activity);
+    });
+
+    let html = '';
+    Object.keys(grouped).slice(0, 3).forEach(category => {
+        const icon = categoryIcons[category] || '📍';
+        const items = grouped[category].slice(0, 3);
+
+        html += `
+            <div class="preview-card">
+                <div class="preview-card-header">
+                    <span>${icon}</span>
+                    <strong>${category}</strong>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
+                    ${items.map(a => `<span style="font-size: 8px; background: #f3f4f6; padding: 2px 6px; border-radius: 8px;">${a.name}</span>`).join('')}
+                </div>
+            </div>
+        `;
+    });
+
+    previewContainer.innerHTML = html;
+}
+
+function renderActivities() {
+    const container = document.getElementById('activitiesTable');
+
+    if (activities.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🎯</div>
+                <div class="empty-state-text">Aucune activité</div>
+            </div>
+        `;
+        return;
+    }
+
+    // Group by category
+    const grouped = {};
+    activities.forEach(activity => {
+        if (!grouped[activity.category]) {
+            grouped[activity.category] = [];
+        }
+        grouped[activity.category].push(activity);
+    });
+
+    let html = '';
+    Object.keys(grouped).forEach(category => {
+        html += `
+            <h3 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--primary-color);">${categoryIcons[category] || '📍'} ${category}</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Emoji</th>
+                        <th>Nom</th>
+                        <th>Description</th>
+                        <th>Distance</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        grouped[category].forEach(activity => {
+            html += `
+                <tr>
+                    <td>${activity.emoji}</td>
+                    <td>${activity.name}</td>
+                    <td>${activity.description}</td>
+                    <td>${activity.distance}</td>
+                    <td class="action-buttons">
+                        <button class="btn btn-sm btn-primary" onclick="editActivity(${activity.id})">Modifier</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteActivity(${activity.id})">Supprimer</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `
+                </tbody>
+            </table>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+function openAddModal() {
+    document.getElementById('modalTitle').textContent = 'Ajouter une activité';
+    document.getElementById('activityForm').reset();
+    document.getElementById('activity_id').value = '';
+
+    // Reset emoji trigger button
+    const emojiTrigger = document.querySelector('#activityForm .emoji-trigger');
+    if (emojiTrigger) {
+        emojiTrigger.textContent = '🏞️';
+    }
+
+    openModal('activityModal');
+}
+
+async function editActivity(id) {
+    const activity = activities.find(a => a.id === id);
+    if (!activity) return;
+
+    document.getElementById('modalTitle').textContent = 'Modifier l\'activité';
+    document.getElementById('activity_id').value = activity.id;
+    loadDataIntoForm(activity, 'activityForm');
+
+    // Update emoji trigger button
+    const emojiTrigger = document.querySelector('#activityForm .emoji-trigger');
+    if (emojiTrigger && activity.emoji) {
+        emojiTrigger.textContent = activity.emoji;
+    }
+
+    openModal('activityModal');
+}
+
+async function deleteActivity(id) {
+    if (!confirmAction('Êtes-vous sûr de vouloir supprimer cette activité ?')) {
+        return;
+    }
+
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    try {
+        const response = await fetch(`/api/activities/${id}`, {
+            method: 'DELETE',
+            headers: headers
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert(result.message, 'success');
+            loadActivities();
+        } else {
+            showAlert('Erreur: ' + (result.error || 'Échec de la suppression'), 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de connexion', 'error');
+    }
+}
+
+document.getElementById('activityForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    const formData = getFormData('activityForm');
+    const activityId = document.getElementById('activity_id').value;
+
+    const url = activityId ? `/api/activities/${activityId}` : '/api/activities';
+    const method = activityId ? 'PUT' : 'POST';
+
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: headers,
+            body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert(result.message, 'success');
+            closeModal('activityModal');
+            loadActivities();
+        } else {
+            showAlert('Erreur: ' + (result.error || 'Échec de l\'opération'), 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de connexion', 'error');
+    }
+});
+
+// Load data on page load
+loadCategories();
+loadActivities();
+</script>
+{% endblock %}

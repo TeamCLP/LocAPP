@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Urgences - Administration LocApp{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+    <div class="admin-form-section">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Numéros d'urgence</h2>
+            </div>
+
+            <div class="info-box">
+                <strong>Information:</strong> Les numéros d'urgence sont pré-configurés et ne peuvent pas être modifiés pour des raisons de sécurité.
+            </div>
+
+            <table class="table" style="margin-top: 1.5rem;">
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Numéro</th>
+                        <th>Catégorie</th>
+                    </tr>
+                </thead>
+                <tbody id="emergencyTable">
+                    <tr>
+                        <td colspan="3" class="empty-state">Chargement...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="admin-preview-section">
+        <p class="preview-title">Aperçu mobile - Urgences</p>
+        <div class="mini-iphone">
+            <div class="iphone-notch"></div>
+            <div class="iphone-screen">
+                <div class="status-bar">
+                    <span>Urgences</span>
+                </div>
+                <div class="app-content">
+                    <div class="preview-content">
+                        <div class="preview-card" style="background: #fef2f2; text-align: center; margin-bottom: 12px;">
+                            <span style="font-size: 32px;">🆘</span>
+                            <p style="font-size: 10px; color: #b91c1c; margin-top: 4px;"><strong>Numéros d'urgence</strong></p>
+                            <p style="font-size: 8px; color: #ef4444;">En cas d'urgence, appelez directement</p>
+                        </div>
+
+                        <div class="preview-section-title">Services d'urgence</div>
+                        <div class="preview-card" id="preview-emergency-list">
+                            <div class="preview-emergency-item">
+                                <span>🚑</span>
+                                <strong>SAMU</strong>
+                                <span class="number">15</span>
+                            </div>
+                            <div class="preview-emergency-item">
+                                <span>🚒</span>
+                                <strong>Pompiers</strong>
+                                <span class="number">18</span>
+                            </div>
+                            <div class="preview-emergency-item">
+                                <span>👮</span>
+                                <strong>Police</strong>
+                                <span class="number">17</span>
+                            </div>
+                            <div class="preview-emergency-item">
+                                <span>🇪🇺</span>
+                                <strong>Urgences Europe</strong>
+                                <span class="number">112</span>
+                            </div>
+                        </div>
+
+                        <div class="preview-card" style="background: #fffbeb; margin-top: 12px;">
+                            <div class="preview-card-header">
+                                <span>💡</span>
+                                <strong>Conseil</strong>
+                            </div>
+                            <p>Le 112 fonctionne partout en Europe et peut être composé même sans réseau.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const emergencyIcons = {
+    'SAMU': '🚑',
+    'Pompiers': '🚒',
+    'Police': '👮',
+    'Urgences Europe': '🇪🇺'
+};
+
+async function loadData() {
+    try {
+        const data = await fetchAPI('/api/emergency');
+        const tableBody = document.getElementById('emergencyTable');
+        const previewList = document.getElementById('preview-emergency-list');
+
+        if (data && data.length > 0) {
+            tableBody.innerHTML = data.map(item => `
+                <tr>
+                    <td>${emergencyIcons[item.name] || '📞'} ${item.name}</td>
+                    <td><strong>${item.number}</strong></td>
+                    <td><span class="badge badge-warning">${item.category}</span></td>
+                </tr>
+            `).join('');
+
+            previewList.innerHTML = data.map(item => `
+                <div class="preview-emergency-item">
+                    <span>${emergencyIcons[item.name] || '📞'}</span>
+                    <strong>${item.name}</strong>
+                    <span class="number">${item.number}</span>
+                </div>
+            `).join('');
+        } else {
+            tableBody.innerHTML = '<tr><td colspan="3" class="empty-state">Aucun numéro d\'urgence configuré</td></tr>';
+        }
+    } catch (error) {
+        showAlert('Erreur lors du chargement des données', 'error');
+    }
+}
+
+loadData();
+</script>
+{% endblock %}

@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Parking - Administration LocApp{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+    <div class="admin-form-section">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Informations Parking</h2>
+            </div>
+
+            <form id="parkingForm">
+                <div class="form-group">
+                    <label class="form-label" for="distance">Distance</label>
+                    <input type="text" class="form-control" id="distance" name="distance" placeholder="150m" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="description">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <input type="checkbox" id="is_free" name="is_free"> Parking gratuit
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="tips">Conseils</label>
+                    <textarea class="form-control" id="tips" name="tips" rows="2"></textarea>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <button type="button" class="btn btn-secondary" onclick="loadData()">Annuler</button>
+                </div>
+            </form>
+
+            <div class="info-box" style="margin-top: 2rem;">
+                <strong>Dernière modification:</strong> <span id="lastUpdate">-</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-preview-section">
+        <p class="preview-title">Aperçu mobile - Parking</p>
+        <div class="mini-iphone">
+            <div class="iphone-notch"></div>
+            <div class="iphone-screen">
+                <div class="status-bar">
+                    <span>Infos Pratiques</span>
+                </div>
+                <div class="app-content">
+                    <div class="preview-content">
+                        <div class="preview-section-title">Stationnement</div>
+                        <div class="preview-card">
+                            <div class="preview-row">
+                                <span class="preview-row-icon">🚗</span>
+                                <div class="preview-row-content">
+                                    <strong>Parking</strong>
+                                    <small id="preview-distance">À 150m</small>
+                                </div>
+                            </div>
+                            <div class="preview-row">
+                                <span class="preview-row-icon">💰</span>
+                                <div class="preview-row-content">
+                                    <strong>Tarif</strong>
+                                    <small id="preview-free">Gratuit</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="preview-card">
+                            <div class="preview-card-header">
+                                <span>📝</span>
+                                <strong>Description</strong>
+                            </div>
+                            <p id="preview-description">Le parking le plus proche se trouve à environ 150 mètres du mazet...</p>
+                        </div>
+
+                        <div class="preview-card" style="background: #fffbeb;">
+                            <div class="preview-card-header">
+                                <span>💡</span>
+                                <strong>Conseils</strong>
+                            </div>
+                            <p id="preview-tips">En été et les jours de marché (samedi), les places peuvent être plus difficiles à trouver...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updatePreview() {
+    const distance = document.getElementById('distance').value;
+    document.getElementById('preview-distance').textContent = distance ? `À ${distance}` : 'À proximité';
+    document.getElementById('preview-free').textContent = document.getElementById('is_free').checked ? 'Gratuit' : 'Payant';
+    document.getElementById('preview-description').textContent = document.getElementById('description').value || '';
+    document.getElementById('preview-tips').textContent = document.getElementById('tips').value || 'Aucun conseil particulier';
+}
+
+document.querySelectorAll('#parkingForm input, #parkingForm textarea').forEach(input => {
+    input.addEventListener('input', updatePreview);
+    input.addEventListener('change', updatePreview);
+});
+
+async function loadData() {
+    try {
+        const data = await fetchAPI('/api/parking');
+        loadDataIntoForm(data, 'parkingForm');
+        document.getElementById('lastUpdate').textContent = formatDate(data.updated_at);
+        updatePreview();
+    } catch (error) {
+        showAlert('Erreur lors du chargement des données', 'error');
+    }
+}
+
+document.getElementById('parkingForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    const formData = getFormData('parkingForm');
+
+    try {
+        const response = await fetch('/api/parking', {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert(result.message, 'success');
+            loadData();
+        } else {
+            showAlert('Erreur: ' + (result.error || 'Échec de la mise à jour'), 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de connexion', 'error');
+    }
+});
+
+loadData();
+</script>
+{% endblock %}

@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration WiFi - Administration LocApp{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+    <div class="admin-form-section">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Configuration WiFi</h2>
+            </div>
+
+            <!-- QR Code Section -->
+            <div class="qr-code-section">
+                <div class="qr-code-container">
+                    <div id="qrcode-display" class="qr-code-placeholder">
+                        <span class="qr-placeholder-icon">📱</span>
+                        <span class="qr-placeholder-text">QR Code WiFi</span>
+                    </div>
+                </div>
+                <div class="qr-code-actions">
+                    <button type="button" class="btn btn-primary" onclick="generateQRCode()">
+                        <span>🔄</span> Générer le QR Code
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="downloadQRCode()" id="downloadQrBtn" disabled>
+                        <span>⬇️</span> Télécharger
+                    </button>
+                </div>
+                <p class="qr-code-info">Le QR Code permet aux invités de se connecter automatiquement au WiFi en le scannant avec leur téléphone.</p>
+            </div>
+
+            <form id="wifiForm">
+                <div class="form-group">
+                    <label class="form-label" for="ssid">SSID (Nom du réseau)</label>
+                    <input type="text" class="form-control" id="ssid" name="ssid" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Mot de passe WiFi</label>
+                    <input type="text" class="form-control" id="password" name="password" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="location_description">Description de l'emplacement</label>
+                    <textarea class="form-control" id="location_description" name="location_description" rows="3" required></textarea>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <button type="button" class="btn btn-secondary" onclick="loadData()">Annuler</button>
+                </div>
+            </form>
+
+            <div class="info-box" style="margin-top: 2rem;">
+                <strong>Dernière modification:</strong> <span id="lastUpdate">-</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-preview-section">
+        <p class="preview-title">Aperçu mobile - WiFi</p>
+        <div class="mini-iphone">
+            <div class="iphone-notch"></div>
+            <div class="iphone-screen">
+                <div class="status-bar">
+                    <span>Infos Pratiques</span>
+                </div>
+                <div class="app-content">
+                    <div class="preview-content">
+                        <div class="preview-section-title">Connexion Internet</div>
+                        <div class="preview-card">
+                            <div class="preview-row">
+                                <span class="preview-row-icon">📶</span>
+                                <div class="preview-row-content">
+                                    <strong>Réseau WiFi</strong>
+                                    <small id="preview-ssid">Roussel_Bonard_07</small>
+                                </div>
+                            </div>
+                            <div class="preview-row">
+                                <span class="preview-row-icon">🔑</span>
+                                <div class="preview-row-content">
+                                    <strong>Mot de passe</strong>
+                                    <small id="preview-password">Solex07700</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="preview-card" style="background: #eff6ff;">
+                            <div class="preview-card-header">
+                                <span>💡</span>
+                                <strong>Information</strong>
+                            </div>
+                            <p id="preview-location">Le WiFi couvre l'ensemble du mazet. La box se trouve dans le salon.</p>
+                        </div>
+
+                        <div class="preview-card" style="margin-top: 16px;">
+                            <div class="preview-card-header">
+                                <span>📱</span>
+                                <strong>QR Code</strong>
+                            </div>
+                            <div id="preview-qrcode" style="text-align: center; padding: 8px; min-height: 80px; display: flex; align-items: center; justify-content: center;">
+                                <span style="font-size: 36px;">📲</span>
+                            </div>
+                            <p style="text-align: center; font-size: 8px; color: #6b7280;">Scannez pour vous connecter</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- QR Code Library - local version -->
+<script src="{{ url_for('static', filename='js/qrcode.min.js') }}"></script>
+<script>
+let qrCodeInstance = null;
+let previewQrCodeInstance = null;
+
+function updatePreview() {
+    document.getElementById('preview-ssid').textContent = document.getElementById('ssid').value || 'Nom du réseau';
+    document.getElementById('preview-password').textContent = document.getElementById('password').value || 'Mot de passe';
+    document.getElementById('preview-location').textContent = document.getElementById('location_description').value || '';
+}
+
+// Generate WiFi QR Code
+function generateQRCode() {
+    const ssid = document.getElementById('ssid').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    if (!ssid) {
+        showAlert('Veuillez entrer le nom du réseau (SSID)', 'error');
+        return;
+    }
+
+    if (!password) {
+        showAlert('Veuillez entrer le mot de passe WiFi', 'error');
+        return;
+    }
+
+    // Check if QRCode library is loaded
+    if (typeof QRCode === 'undefined') {
+        showAlert('Bibliothèque QR Code non chargée. Rechargez la page.', 'error');
+        console.error('QRCode library not loaded');
+        return;
+    }
+
+    // WiFi QR Code format: WIFI:T:WPA;S:<SSID>;P:<PASSWORD>;;
+    const escapedSsid = escapeWifiString(ssid);
+    const escapedPassword = escapeWifiString(password);
+    const wifiString = `WIFI:T:WPA;S:${escapedSsid};P:${escapedPassword};;`;
+
+    const qrContainer = document.getElementById('qrcode-display');
+
+    // Clear previous content
+    qrContainer.innerHTML = '';
+    qrContainer.classList.remove('qr-code-placeholder');
+    qrContainer.classList.add('qr-code-generated');
+
+    try {
+        // Generate new QR Code (using L level for longer strings)
+        qrCodeInstance = new QRCode(qrContainer, {
+            text: wifiString,
+            width: 180,
+            height: 180,
+            colorDark: '#1f2937',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.L
+        });
+
+        document.getElementById('downloadQrBtn').disabled = false;
+        showAlert('QR Code généré avec succès!', 'success');
+
+        // Update the mobile preview QR code too
+        updatePreviewQRCode(wifiString);
+
+    } catch (error) {
+        console.error('QR Code generation error:', error);
+        showAlert('Erreur lors de la génération du QR Code: ' + error.message, 'error');
+        qrContainer.innerHTML = `
+            <span class="qr-placeholder-icon">❌</span>
+            <span class="qr-placeholder-text">Erreur de génération</span>
+        `;
+        qrContainer.classList.add('qr-code-placeholder');
+        qrContainer.classList.remove('qr-code-generated');
+    }
+}
+
+// Escape special characters for WiFi QR string
+function escapeWifiString(str) {
+    return str.replace(/\\/g, '\\\\')
+              .replace(/;/g, '\\;')
+              .replace(/,/g, '\\,')
+              .replace(/:/g, '\\:')
+              .replace(/"/g, '\\"');
+}
+
+// Update the QR code in mobile preview
+function updatePreviewQRCode(wifiString) {
+    const previewQrContainer = document.getElementById('preview-qrcode');
+    if (!previewQrContainer) return;
+
+    previewQrContainer.innerHTML = '';
+
+    try {
+        previewQrCodeInstance = new QRCode(previewQrContainer, {
+            text: wifiString,
+            width: 70,
+            height: 70,
+            colorDark: '#1f2937',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.L
+        });
+    } catch (error) {
+        console.error('Preview QR Code error:', error);
+    }
+}
+
+// Download QR Code as PNG
+function downloadQRCode() {
+    const qrContainer = document.getElementById('qrcode-display');
+    const canvas = qrContainer.querySelector('canvas');
+    const img = qrContainer.querySelector('img');
+
+    let dataUrl = null;
+
+    if (canvas) {
+        dataUrl = canvas.toDataURL('image/png');
+    } else if (img) {
+        // QRCode.js sometimes uses img instead of canvas
+        dataUrl = img.src;
+    }
+
+    if (!dataUrl) {
+        showAlert('Veuillez d\'abord générer le QR Code', 'error');
+        return;
+    }
+
+    const ssid = document.getElementById('ssid').value.trim() || 'wifi';
+    const link = document.createElement('a');
+    link.download = `wifi-qrcode-${ssid.replace(/[^a-z0-9]/gi, '_')}.png`;
+    link.href = dataUrl;
+    link.click();
+    showAlert('QR Code téléchargé!', 'success');
+}
+
+document.querySelectorAll('#wifiForm input, #wifiForm textarea').forEach(input => {
+    input.addEventListener('input', updatePreview);
+});
+
+async function loadData() {
+    try {
+        const data = await fetchAPI('/api/wifi');
+        loadDataIntoForm(data, 'wifiForm');
+        document.getElementById('lastUpdate').textContent = formatDate(data.updated_at);
+        updatePreview();
+
+        // Auto-generate QR code if SSID and password exist
+        if (data.ssid && data.password) {
+            setTimeout(() => generateQRCode(), 100);
+        }
+    } catch (error) {
+        showAlert('Erreur lors du chargement des données', 'error');
+    }
+}
+
+document.getElementById('wifiForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    const formData = getFormData('wifiForm');
+
+    try {
+        const response = await fetch('/api/wifi', {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert(result.message, 'success');
+            loadData();
+        } else {
+            showAlert('Erreur: ' + (result.error || 'Échec de la mise à jour'), 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de connexion', 'error');
+    }
+});
+
+loadData();
+</script>
+{% endblock %}

@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Accès & Clés - Administration LocApp{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+    <div class="admin-form-section">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Clés & Accès</h2>
+            </div>
+
+            <form id="accessForm">
+                <div class="form-group">
+                    <label class="form-label" for="check_in_time">Heure de check-in</label>
+                    <input type="time" class="form-control" id="check_in_time" name="check_in_time" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="check_out_time">Heure de check-out</label>
+                    <input type="time" class="form-control" id="check_out_time" name="check_out_time" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="keybox_code">Code de la boîte à clés</label>
+                    <input type="text" class="form-control" id="keybox_code" name="keybox_code" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="keybox_location">Emplacement de la boîte à clés</label>
+                    <textarea class="form-control" id="keybox_location" name="keybox_location" rows="2" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="access_instructions">Instructions d'accès</label>
+                    <textarea class="form-control" id="access_instructions" name="access_instructions" rows="3" required></textarea>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <button type="button" class="btn btn-secondary" onclick="loadData()">Annuler</button>
+                </div>
+            </form>
+
+            <div class="info-box" style="margin-top: 2rem;">
+                <strong>Dernière modification:</strong> <span id="lastUpdate">-</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-preview-section">
+        <p class="preview-title">Aperçu mobile - Accès</p>
+        <div class="mini-iphone">
+            <div class="iphone-notch"></div>
+            <div class="iphone-screen">
+                <div class="status-bar">
+                    <span>Infos Pratiques</span>
+                </div>
+                <div class="app-content">
+                    <div class="preview-content">
+                        <div class="preview-section-title">Horaires</div>
+                        <div class="preview-card">
+                            <div class="preview-row">
+                                <span class="preview-row-icon">🛬</span>
+                                <div class="preview-row-content">
+                                    <strong>Check-in</strong>
+                                    <small>À partir de <span id="preview-checkin">16:00</span></small>
+                                </div>
+                            </div>
+                            <div class="preview-row">
+                                <span class="preview-row-icon">🛫</span>
+                                <div class="preview-row-content">
+                                    <strong>Check-out</strong>
+                                    <small>Avant <span id="preview-checkout">10:00</span></small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="preview-section-title">Boîte à clés</div>
+                        <div class="preview-card" style="background: #fef3c7;">
+                            <div class="preview-card-header">
+                                <span>🔐</span>
+                                <strong>Code d'accès</strong>
+                            </div>
+                            <p style="text-align: center; font-size: 24px; font-weight: bold; color: #92400e; padding: 8px 0;" id="preview-code">1012</p>
+                        </div>
+
+                        <div class="preview-card">
+                            <div class="preview-card-header">
+                                <span>📍</span>
+                                <strong>Emplacement</strong>
+                            </div>
+                            <p id="preview-location">La boîte à clés se trouve à l'entrée principale.</p>
+                        </div>
+
+                        <div class="preview-card" style="background: #eff6ff;">
+                            <div class="preview-card-header">
+                                <span>📝</span>
+                                <strong>Instructions</strong>
+                            </div>
+                            <p id="preview-instructions">Utilisez ce code pour l'ouvrir et récupérer les clés...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updatePreview() {
+    document.getElementById('preview-checkin').textContent = document.getElementById('check_in_time').value || '16:00';
+    document.getElementById('preview-checkout').textContent = document.getElementById('check_out_time').value || '10:00';
+    document.getElementById('preview-code').textContent = document.getElementById('keybox_code').value || '****';
+    document.getElementById('preview-location').textContent = document.getElementById('keybox_location').value || '';
+    document.getElementById('preview-instructions').textContent = document.getElementById('access_instructions').value || '';
+}
+
+document.querySelectorAll('#accessForm input, #accessForm textarea').forEach(input => {
+    input.addEventListener('input', updatePreview);
+});
+
+async function loadData() {
+    try {
+        const data = await fetchAPI('/api/access');
+        loadDataIntoForm(data, 'accessForm');
+        document.getElementById('lastUpdate').textContent = formatDate(data.updated_at);
+        updatePreview();
+    } catch (error) {
+        showAlert('Erreur lors du chargement des données', 'error');
+    }
+}
+
+document.getElementById('accessForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
+    const formData = getFormData('accessForm');
+
+    try {
+        const response = await fetch('/api/access', {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert(result.message, 'success');
+            loadData();
+        } else {
+            showAlert('Erreur: ' + (result.error || 'Échec de la mise à jour'), 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de connexion', 'error');
+    }
+});
+
+loadData();
+</script>
+{% endblock %}
