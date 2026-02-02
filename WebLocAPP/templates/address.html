@@ -137,7 +137,8 @@ document.getElementById('addressForm').addEventListener('submit', async (e) => {
     const formData = getFormData('addressForm');
 
     try {
-        const response = await fetch('/api/address', {
+        const propertyId = getCurrentPropertyId();
+        const response = await fetch(`/api/address?property_id=${propertyId}`, {
             method: 'PUT',
             headers: headers,
             body: JSON.stringify(formData)

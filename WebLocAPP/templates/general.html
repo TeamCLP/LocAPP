@@ -127,7 +127,8 @@ document.getElementById('generalForm').addEventListener('submit', async (e) => {
     const formData = getFormData('generalForm');
 
     try {
-        const response = await fetch('/api/general', {
+        const propertyId = getCurrentPropertyId();
+        const response = await fetch(`/api/general?property_id=${propertyId}`, {
             method: 'PUT',
             headers: headers,
             body: JSON.stringify(formData)

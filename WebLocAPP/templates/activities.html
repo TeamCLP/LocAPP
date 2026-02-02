@@ -340,8 +340,11 @@ document.getElementById('activityForm').addEventListener('submit', async (e) => 
 
     const formData = getFormData('activityForm');
     const activityId = document.getElementById('activity_id').value;
+    const propertyId = getCurrentPropertyId();
 
-    const url = activityId ? `/api/activities/${activityId}` : '/api/activities';
+    const url = activityId
+        ? `/api/activities/${activityId}?property_id=${propertyId}`
+        : `/api/activities?property_id=${propertyId}`;
     const method = activityId ? 'PUT' : 'POST';
 
     try {

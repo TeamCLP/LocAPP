@@ -130,7 +130,8 @@ document.getElementById('parkingForm').addEventListener('submit', async (e) => {
     const formData = getFormData('parkingForm');
 
     try {
-        const response = await fetch('/api/parking', {
+        const propertyId = getCurrentPropertyId();
+        const response = await fetch(`/api/parking?property_id=${propertyId}`, {
             method: 'PUT',
             headers: headers,
             body: JSON.stringify(formData)

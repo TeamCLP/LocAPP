@@ -112,7 +112,7 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- QR Code Library - local version -->
+<!-- QR Code Library -->
 <script src="{{ url_for('static', filename='js/qrcode.min.js') }}"></script>
 <script>
 let qrCodeInstance = null;
@@ -188,12 +188,14 @@ function generateQRCode() {
 }
 
 // Escape special characters for WiFi QR string
+// Only escape backslash, semicolon, comma, and colon as per WiFi QR spec
 function escapeWifiString(str) {
-    return str.replace(/\\/g, '\\\\')
-              .replace(/;/g, '\\;')
-              .replace(/,/g, '\\,')
-              .replace(/:/g, '\\:')
-              .replace(/"/g, '\\"');
+    if (!str) return '';
+    return str
+        .replace(/\\/g, '\\\\')
+        .replace(/;/g, '\\;')
+        .replace(/,/g, '\\,')
+        .replace(/:/g, '\\:');
 }
 
 // Update the QR code in mobile preview
@@ -274,7 +276,8 @@ document.getElementById('wifiForm').addEventListener('submit', async (e) => {
     const formData = getFormData('wifiForm');
 
     try {
-        const response = await fetch('/api/wifi', {
+        const propertyId = getCurrentPropertyId();
+        const response = await fetch(`/api/wifi?property_id=${propertyId}`, {
             method: 'PUT',
             headers: headers,
             body: JSON.stringify(formData)

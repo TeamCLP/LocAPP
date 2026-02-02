@@ -332,8 +332,11 @@ document.getElementById('serviceForm').addEventListener('submit', async (e) => {
 
     const formData = getFormData('serviceForm');
     const serviceId = document.getElementById('service_id').value;
+    const propertyId = getCurrentPropertyId();
 
-    const url = serviceId ? `/api/services/${serviceId}` : '/api/services';
+    const url = serviceId
+        ? `/api/services/${serviceId}?property_id=${propertyId}`
+        : `/api/services?property_id=${propertyId}`;
     const method = serviceId ? 'PUT' : 'POST';
 
     try {

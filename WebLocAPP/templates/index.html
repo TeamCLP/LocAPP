@@ -477,7 +477,8 @@ function downloadExport() {
 
     if (!username || !password) return;
 
-    fetch('/api/export/download', {
+    const propertyId = getCurrentPropertyId();
+    fetch(`/api/export/download?property_id=${propertyId}`, {
         headers: {
             'Authorization': 'Basic ' + btoa(username + ':' + password)
         }

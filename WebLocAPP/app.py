@@ -12,7 +12,7 @@ db = Database()
 
 # Simple authentication (in production, use proper authentication)
 USERNAME = 'admin'
-PASSWORD = 'locapp2024'
+PASSWORD = 'admin'
 
 def check_auth(username, password):
     return username == USERNAME and password == PASSWORD
