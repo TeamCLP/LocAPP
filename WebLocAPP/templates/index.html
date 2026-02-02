@@ -404,18 +404,22 @@ tabBtns.forEach(btn => {
     });
 });
 
-// Load data from API
-async function loadAppData() {
+// Load data from API (named loadData for property selector compatibility)
+async function loadData() {
     try {
+        // Get current property ID and build URLs with property_id parameter
+        const propertyId = getCurrentPropertyId();
+        const addPropertyId = (url) => `${url}?property_id=${propertyId}`;
+
         const [general, wifi, address, parking, access, contact, activities, emergency] = await Promise.all([
-            fetch('/api/general').then(r => r.json()).catch(() => ({})),
-            fetch('/api/wifi').then(r => r.json()).catch(() => ({})),
-            fetch('/api/address').then(r => r.json()).catch(() => ({})),
-            fetch('/api/parking').then(r => r.json()).catch(() => ({})),
-            fetch('/api/access').then(r => r.json()).catch(() => ({})),
-            fetch('/api/contact').then(r => r.json()).catch(() => ({})),
-            fetch('/api/activities').then(r => r.json()).catch(() => []),
-            fetch('/api/emergency').then(r => r.json()).catch(() => [])
+            fetch(addPropertyId('/api/general')).then(r => r.json()).catch(() => ({})),
+            fetch(addPropertyId('/api/wifi')).then(r => r.json()).catch(() => ({})),
+            fetch(addPropertyId('/api/address')).then(r => r.json()).catch(() => ({})),
+            fetch(addPropertyId('/api/parking')).then(r => r.json()).catch(() => ({})),
+            fetch(addPropertyId('/api/access')).then(r => r.json()).catch(() => ({})),
+            fetch(addPropertyId('/api/contact')).then(r => r.json()).catch(() => ({})),
+            fetch(addPropertyId('/api/activities')).then(r => r.json()).catch(() => []),
+            fetch(addPropertyId('/api/emergency')).then(r => r.json()).catch(() => [])
         ]);
 
         // Update general info
@@ -500,6 +504,6 @@ function downloadExport() {
 }
 
 // Load data on page load
-loadAppData();
+loadData();
 </script>
 {% endblock %}
