@@ -33,3 +33,17 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Environment files (sensitive credentials)
+.env
+.env-*
+*.env
+
+# Backups
+backups/
+
+# User uploads
+static/uploads/
+
+# Data exports
+locapp_vaujany.json
