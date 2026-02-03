@@ -16,6 +16,7 @@ instance/
 
 # Database
 *.db
+!locapp.db
 *.sqlite
 *.sqlite3
 locapp_export.json
