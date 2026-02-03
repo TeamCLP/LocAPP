@@ -154,7 +154,7 @@ async function handleLogin(event) {
             showAlert('Connexion réussie ! Redirection...', 'success');
             localStorage.setItem('auth_token', result.token);
             setTimeout(() => {
-                window.location.href = '/';
+                window.location.href = '/admin';
             }, 1000);
         } else {
             showAlert(result.error || 'Erreur de connexion', 'error');
@@ -193,7 +193,7 @@ async function handleRegister(event) {
             showAlert('Compte créé avec succès ! Redirection...', 'success');
             localStorage.setItem('auth_token', result.token);
             setTimeout(() => {
-                window.location.href = '/';
+                window.location.href = '/admin';
             }, 1000);
         } else {
             showAlert(result.error || 'Erreur lors de la création du compte', 'error');

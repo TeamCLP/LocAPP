@@ -614,6 +614,11 @@ def get_user_properties(current_user):
     return []
 
 @app.route('/')
+def home():
+    """Redirect to commercial site"""
+    return redirect(url_for('commercial_home'))
+
+@app.route('/admin')
 def admin_home():
     """Admin dashboard"""
     current_user = get_current_user()

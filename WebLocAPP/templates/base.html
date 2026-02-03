@@ -108,7 +108,7 @@
                 <div class="sidebar-nav-section">
                     <span class="nav-section-title">Gestion</span>
                     <ul class="nav-links">
-                        <li><a href="/" class="nav-link">🏠 Accueil</a></li>
+                        <li><a href="/admin" class="nav-link">🏠 Accueil</a></li>
                         <li><a href="/general" class="nav-link">⚙️ Général</a></li>
                         <li><a href="/wifi" class="nav-link"><img src="/static/images/wifi-icon.svg" class="nav-icon" alt="WiFi"> WiFi</a></li>
                         <li><a href="/address" class="nav-link">📍 Adresse</a></li>
@@ -174,9 +174,9 @@
                 localStorage.setItem('locapp_current_property', select.value);
                 // Update region display
                 updateRegionDisplay(select);
-                // If on new property page, redirect to home, otherwise reload
+                // If on new property page, redirect to admin home, otherwise reload
                 if (window.location.pathname === '/property/new') {
-                    window.location.href = '/';
+                    window.location.href = '/admin';
                 } else {
                     window.location.reload();
                 }
