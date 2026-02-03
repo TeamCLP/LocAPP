@@ -654,24 +654,39 @@ class Database:
         return [dict(row) for row in results]
 
     def get_properties_by_user(self, user_id):
-        """Get all properties for a specific user"""
+        """Get all properties for a specific user with city from address table"""
         conn = self.get_connection()
-        results = conn.execute(
-            'SELECT * FROM properties WHERE user_id = ? AND is_active = 1 ORDER BY display_order',
-            (user_id,)
-        ).fetchall()
+        results = conn.execute('''
+            SELECT p.*, a.city
+            FROM properties p
+            LEFT JOIN address a ON p.id = a.property_id
+            WHERE p.user_id = ? AND p.is_active = 1
+            ORDER BY p.display_order
+        ''', (user_id,)).fetchall()
         conn.close()
         return [dict(row) for row in results]
 
     def get_property(self, property_id):
+        """Get property by ID with city from address table"""
         conn = self.get_connection()
-        result = conn.execute('SELECT * FROM properties WHERE id=?', (property_id,)).fetchone()
+        result = conn.execute('''
+            SELECT p.*, a.city
+            FROM properties p
+            LEFT JOIN address a ON p.id = a.property_id
+            WHERE p.id=?
+        ''', (property_id,)).fetchone()
         conn.close()
         return dict(result) if result else None
 
     def get_property_by_slug(self, slug):
+        """Get property by slug with city from address table"""
         conn = self.get_connection()
-        result = conn.execute('SELECT * FROM properties WHERE slug=?', (slug,)).fetchone()
+        result = conn.execute('''
+            SELECT p.*, a.city
+            FROM properties p
+            LEFT JOIN address a ON p.id = a.property_id
+            WHERE p.slug=?
+        ''', (slug,)).fetchone()
         conn.close()
         return dict(result) if result else None
 
@@ -966,7 +981,14 @@ class Database:
 
     def get_general_info(self, property_id=1):
         conn = self.get_connection()
-        result = conn.execute('SELECT * FROM general_info WHERE property_id=? ORDER BY id DESC LIMIT 1', (property_id,)).fetchone()
+        result = conn.execute('''
+            SELECT gi.*, p.region, a.city
+            FROM general_info gi
+            LEFT JOIN properties p ON gi.property_id = p.id
+            LEFT JOIN address a ON gi.property_id = a.property_id
+            WHERE gi.property_id=?
+            ORDER BY gi.id DESC LIMIT 1
+        ''', (property_id,)).fetchone()
         conn.close()
         return dict(result) if result else None
 

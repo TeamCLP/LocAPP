@@ -32,8 +32,8 @@
                                 <span class="deco-icon bottom-left">🏛️</span>
                             </div>
                             <span class="header-icon">🏡</span>
-                            <span class="header-title" id="property-name">Le Mazet de BSA</span>
-                            <span class="header-subtitle" id="property-location">Bourg-Saint-Andéol • Ardèche</span>
+                            <span class="header-title" id="property-name">Chargement...</span>
+                            <span class="header-subtitle" id="property-location"></span>
                         </div>
 
                         <div class="welcome-section">
@@ -426,8 +426,14 @@ async function loadData() {
         if (general.property_name) {
             document.getElementById('property-name').textContent = general.property_name;
         }
-        if (general.location) {
-            document.getElementById('property-location').textContent = general.location;
+        // Build location from city and region
+        const locationParts = [];
+        if (general.city) locationParts.push(general.city);
+        if (general.region) locationParts.push(general.region);
+        if (locationParts.length > 0) {
+            document.getElementById('property-location').textContent = locationParts.join(' • ');
+        } else {
+            document.getElementById('property-location').textContent = '';
         }
         if (general.welcome_message) {
             document.getElementById('welcome-message').textContent = general.welcome_message;

@@ -303,26 +303,9 @@ function updatePropertyIndicator() {
     }
 }
 
-// Get property info for display
-function getPropertyDisplayInfo(propertyId) {
-    const id = String(propertyId);
-    if (id === '1' || id === 'mazet-bsa') {
-        return {
-            name: 'Mazet BSA',
-            icon: '🏡',
-            theme: 'mazet-bsa',
-            location: 'Ardèche',
-            accentColor: '#D4A574'
-        };
-    } else if (id === '2' || id === 'vaujany') {
-        return {
-            name: 'Vaujany',
-            icon: '🏔️',
-            theme: 'vaujany',
-            location: 'Isère',
-            accentColor: '#5B8FB9'
-        };
-    }
+// Get property info for display (basic info, detailed data loaded via API)
+function getPropertyDisplayInfo(_propertyId) {
+    // Default values - actual data is loaded dynamically via loadData()
     return {
         name: 'Propriété',
         icon: '🏠',
