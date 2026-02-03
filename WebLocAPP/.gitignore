@@ -38,6 +38,7 @@ Thumbs.db
 # Environment files (sensitive credentials)
 .env
 .env-*
+!.env-weblocapp
 *.env
 
 # Backups
