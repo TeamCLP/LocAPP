@@ -33,7 +33,7 @@
                             </div>
                             <span class="header-icon">🏡</span>
                             <span class="header-title" id="property-name">Chargement...</span>
-                            <span class="header-subtitle" id="property-location"></span>
+                            <span class="header-subtitle" id="mobile-property-location"></span>
                         </div>
 
                         <div class="welcome-section">
@@ -426,14 +426,17 @@ async function loadData() {
         if (general.property_name) {
             document.getElementById('property-name').textContent = general.property_name;
         }
-        // Build location from city and region
+        // Build location from city and region (use selector data or API data)
+        const propertySelector = document.getElementById('property-selector');
+        const selectedOption = propertySelector ? propertySelector.options[propertySelector.selectedIndex] : null;
+        const city = (selectedOption && selectedOption.dataset.city) || general.city || '';
+        const region = (selectedOption && selectedOption.dataset.region) || general.region || '';
         const locationParts = [];
-        if (general.city) locationParts.push(general.city);
-        if (general.region) locationParts.push(general.region);
-        if (locationParts.length > 0) {
-            document.getElementById('property-location').textContent = locationParts.join(' • ');
-        } else {
-            document.getElementById('property-location').textContent = '';
+        if (city) locationParts.push(city);
+        if (region) locationParts.push(region);
+        const mobileLocation = document.getElementById('mobile-property-location');
+        if (mobileLocation) {
+            mobileLocation.textContent = locationParts.length > 0 ? locationParts.join(' • ') : '';
         }
         if (general.welcome_message) {
             document.getElementById('welcome-message').textContent = general.welcome_message;

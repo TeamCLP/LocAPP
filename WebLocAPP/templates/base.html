@@ -89,7 +89,7 @@
                         <label for="property-selector" class="property-label">Propriété</label>
                         <select id="property-selector" class="property-selector" onchange="handlePropertyChange(this)">
                             {% for prop in properties %}
-                            <option value="{{ prop.id }}" data-theme="{{ prop.theme or prop.slug }}" data-icon="{{ prop.icon }}" data-region="{{ prop.region or '' }}">
+                            <option value="{{ prop.id }}" data-theme="{{ prop.theme or prop.slug }}" data-icon="{{ prop.icon }}" data-region="{{ prop.region or '' }}" data-city="{{ prop.city or '' }}">
                                 {{ prop.icon }} {{ prop.name }}
                             </option>
                             {% endfor %}
