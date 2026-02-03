@@ -3,27 +3,26 @@
 {% block title %}Nouvelle Propriété - LocApp{% endblock %}
 
 {% block extra_head %}
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
 /* Map container with smooth transitions */
 #map-wrapper {
-    height: 300px;
-    border-radius: 12px;
+    height: 350px;
+    border-radius: 16px;
     overflow: hidden;
     position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 
 #map-placeholder {
     position: absolute;
     inset: 0;
-    background: #f3f4f6;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: #9ca3af;
-    transition: opacity 0.3s ease;
+    color: #64748b;
+    transition: opacity 0.4s ease;
     z-index: 2;
 }
 
@@ -32,13 +31,82 @@
     pointer-events: none;
 }
 
+#map-placeholder span {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
 #map {
     width: 100%;
     height: 100%;
 }
 
-.leaflet-container {
-    background: #e5e7eb;
+/* Address input with autocomplete styling */
+.address-input-wrapper {
+    position: relative;
+}
+
+.address-input-wrapper input {
+    padding-left: 40px;
+}
+
+.address-input-wrapper .input-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    color: #9ca3af;
+    pointer-events: none;
+}
+
+/* Google Places Autocomplete dropdown styling */
+.pac-container {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    margin-top: 8px;
+    font-family: inherit;
+    z-index: 10000;
+}
+
+.pac-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-top: 1px solid #f1f5f9;
+    font-size: 0.95rem;
+}
+
+.pac-item:first-child {
+    border-top: none;
+    border-radius: 12px 12px 0 0;
+}
+
+.pac-item:last-child {
+    border-radius: 0 0 12px 12px;
+}
+
+.pac-item:hover {
+    background: #f8fafc;
+}
+
+.pac-item-selected {
+    background: #eff6ff;
+}
+
+.pac-icon {
+    margin-right: 12px;
+}
+
+.pac-item-query {
+    font-weight: 600;
+    color: #1e293b;
 }
 
 /* Loading spinner */
@@ -56,6 +124,25 @@
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+/* Location found badge */
+.location-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    color: #047857;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-top: 8px;
+}
+
+.location-badge.error {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    color: #dc2626;
 }
 </style>
 {% endblock %}
@@ -76,22 +163,26 @@
 
         <div class="form-group">
             <label class="form-label" for="property_address">Adresse complète *</label>
-            <input type="text" class="form-control" id="property_address" name="address" required
-                   placeholder="Ex: 15 rue de la Paix, 75002 Paris">
-            <small style="color: #6b7280;">Saisissez l'adresse pour afficher la localisation sur la carte</small>
+            <div class="address-input-wrapper">
+                <span class="input-icon">📍</span>
+                <input type="text" class="form-control" id="property_address" name="address" required
+                       placeholder="Commencez à taper une adresse..." autocomplete="off">
+            </div>
+            <small style="color: #6b7280;">L'autocomplétion Google vous aide à trouver l'adresse exacte</small>
         </div>
 
         <!-- Map Container -->
         <div class="form-group">
-            <label class="form-label">Localisation</label>
+            <label class="form-label">Localisation sur la carte</label>
             <div id="map-wrapper">
                 <div id="map-placeholder">
-                    <span style="font-size: 3rem;">🗺️</span>
-                    <p>La carte s'affichera une fois l'adresse saisie</p>
+                    <span>🗺️</span>
+                    <p style="margin: 0; font-weight: 500;">Recherchez une adresse</p>
+                    <p style="margin: 4px 0 0; font-size: 0.85rem; opacity: 0.7;">La carte s'affichera automatiquement</p>
                 </div>
                 <div id="map"></div>
             </div>
-            <div id="geocoding-status" style="margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280;"></div>
+            <div id="geocoding-status"></div>
         </div>
 
         <!-- Hidden fields for coordinates and location data -->
@@ -202,115 +293,219 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Google Maps with Places API -->
 <script>
 let map = null;
 let marker = null;
-let geocodingTimeout = null;
+let autocomplete = null;
 const addressInput = document.getElementById('property_address');
 const statusEl = document.getElementById('geocoding-status');
 const placeholder = document.getElementById('map-placeholder');
 
-// Initialize map immediately (hidden behind placeholder)
-function initializeMap() {
-    if (map) return;
+// Google Maps API Key - configure in settings
+const GOOGLE_MAPS_API_KEY = '{{ config.get("GOOGLE_MAPS_API_KEY", "") }}';
 
-    map = L.map('map', {
-        center: [46.603354, 1.888334], // France center
-        zoom: 5,
-        zoomControl: true
-    });
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-    }).addTo(map);
+// Load Google Maps API dynamically
+function loadGoogleMapsAPI() {
+    if (GOOGLE_MAPS_API_KEY) {
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=initGoogleMaps&language=fr`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+    } else {
+        // Fallback to OpenStreetMap if no Google API key
+        loadOpenStreetMap();
+    }
 }
 
-// Show map with coordinates
-function showMap(lat, lng) {
+// Initialize Google Maps
+function initGoogleMaps() {
+    // Initialize map centered on France
+    map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 46.603354, lng: 1.888334 },
+        zoom: 5,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: true,
+        styles: [
+            { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }
+        ]
+    });
+
+    // Initialize Places Autocomplete
+    autocomplete = new google.maps.places.Autocomplete(addressInput, {
+        types: ['address'],
+        componentRestrictions: { country: 'fr' },
+        fields: ['formatted_address', 'geometry', 'address_components', 'name']
+    });
+
+    // Bias results to France
+    autocomplete.setBounds(new google.maps.LatLngBounds(
+        new google.maps.LatLng(41.333, -5.266),
+        new google.maps.LatLng(51.124, 9.662)
+    ));
+
+    // Handle place selection
+    autocomplete.addListener('place_changed', function() {
+        const place = autocomplete.getPlace();
+
+        if (!place.geometry || !place.geometry.location) {
+            statusEl.innerHTML = '<div class="location-badge error">❌ Adresse non trouvée</div>';
+            return;
+        }
+
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+
+        // Extract region from address components
+        let region = '';
+        let city = '';
+        if (place.address_components) {
+            for (const component of place.address_components) {
+                if (component.types.includes('administrative_area_level_2')) {
+                    region = component.long_name; // Département
+                } else if (component.types.includes('administrative_area_level_1')) {
+                    if (!region) region = component.long_name; // Région
+                } else if (component.types.includes('locality')) {
+                    city = component.long_name;
+                }
+            }
+        }
+
+        // Store values
+        document.getElementById('property_lat').value = lat;
+        document.getElementById('property_lng').value = lng;
+        document.getElementById('property_display_name').value = place.formatted_address;
+        document.getElementById('property_region').value = region;
+
+        // Show status
+        statusEl.innerHTML = `<div class="location-badge">✓ ${city ? city + ' • ' : ''}${region || 'Localisation trouvée'}</div>`;
+
+        // Show on map
+        showMapAtLocation(lat, lng, place.formatted_address);
+    });
+}
+
+// Show map at specific location
+function showMapAtLocation(lat, lng, title) {
     placeholder.classList.add('hidden');
 
-    if (!map) initializeMap();
-
-    map.setView([lat, lng], 15, { animate: true });
+    map.setCenter({ lat, lng });
+    map.setZoom(16);
 
     if (marker) {
-        marker.setLatLng([lat, lng]);
+        marker.setPosition({ lat, lng });
     } else {
-        marker = L.marker([lat, lng]).addTo(map);
+        marker = new google.maps.Marker({
+            position: { lat, lng },
+            map: map,
+            animation: google.maps.Animation.DROP,
+            title: title
+        });
     }
-
-    // Ensure proper size calculation
-    setTimeout(() => map.invalidateSize(), 50);
-
-    // Store coordinates
-    document.getElementById('property_lat').value = lat;
-    document.getElementById('property_lng').value = lng;
 
     // Enable buttons
     document.getElementById('submitBtn').disabled = !document.getElementById('property_name').value.trim();
     document.getElementById('aiBtn').disabled = false;
 }
 
-// Debounced geocoding
+// Fallback: OpenStreetMap with Nominatim
+function loadOpenStreetMap() {
+    // Load Leaflet CSS
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
+
+    // Load Leaflet JS
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.onload = initLeafletMap;
+    document.head.appendChild(script);
+}
+
+let leafletMap = null;
+let leafletMarker = null;
+let geocodingTimeout = null;
+
+function initLeafletMap() {
+    leafletMap = L.map('map', {
+        center: [46.603354, 1.888334],
+        zoom: 5
+    });
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap © CartoDB',
+        maxZoom: 19
+    }).addTo(leafletMap);
+
+    // Use Nominatim for geocoding
+    addressInput.addEventListener('input', debounceGeocoding);
+}
+
 function debounceGeocoding() {
     clearTimeout(geocodingTimeout);
     const address = addressInput.value.trim();
 
     if (address.length < 5) {
-        statusEl.textContent = '';
+        statusEl.innerHTML = '';
         return;
     }
 
     statusEl.innerHTML = '<span class="geocoding-spinner"></span>Recherche...';
-
-    geocodingTimeout = setTimeout(() => geocodeAddress(address), 500);
+    geocodingTimeout = setTimeout(() => geocodeWithNominatim(address), 500);
 }
 
-// Geocode address
-async function geocodeAddress(address) {
+async function geocodeWithNominatim(address) {
     try {
         const response = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1`,
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1&countrycodes=fr`,
             { headers: { 'Accept-Language': 'fr' } }
         );
 
         const data = await response.json();
 
         if (data?.length > 0) {
-            const { lat, lon, display_name, address: addressDetails } = data[0];
+            const { lat, lon, display_name, address: addr } = data[0];
 
-            // Extract region from address details (department, state, or county)
-            let region = '';
-            if (addressDetails) {
-                // Priority: département > state > county > city
-                region = addressDetails.county || addressDetails.state || addressDetails.department || addressDetails.city || '';
-            }
+            let region = addr?.county || addr?.state || addr?.department || '';
+            let city = addr?.city || addr?.town || addr?.village || '';
 
-            // Store the full display name and region
+            document.getElementById('property_lat').value = lat;
+            document.getElementById('property_lng').value = lon;
             document.getElementById('property_display_name').value = display_name;
             document.getElementById('property_region').value = region;
 
-            statusEl.innerHTML = `<span style="color: #10b981;">✓ ${display_name.substring(0, 60)}...</span>`;
-            if (region) {
-                statusEl.innerHTML += `<br><small style="color: #6b7280;">Région: ${region}</small>`;
-            }
-            showMap(parseFloat(lat), parseFloat(lon));
+            statusEl.innerHTML = `<div class="location-badge">✓ ${city ? city + ' • ' : ''}${region || 'Localisation trouvée'}</div>`;
+
+            showLeafletMap(parseFloat(lat), parseFloat(lon));
         } else {
-            statusEl.innerHTML = '<span style="color: #ef4444;">✗ Adresse non trouvée</span>';
-            document.getElementById('submitBtn').disabled = true;
-            document.getElementById('aiBtn').disabled = true;
-            document.getElementById('property_display_name').value = '';
-            document.getElementById('property_region').value = '';
+            statusEl.innerHTML = '<div class="location-badge error">❌ Adresse non trouvée</div>';
         }
     } catch (e) {
-        statusEl.innerHTML = '<span style="color: #ef4444;">✗ Erreur de recherche</span>';
+        statusEl.innerHTML = '<div class="location-badge error">❌ Erreur de recherche</div>';
     }
 }
 
-// Event listeners
-addressInput.addEventListener('input', debounceGeocoding);
+function showLeafletMap(lat, lng) {
+    placeholder.classList.add('hidden');
 
+    leafletMap.setView([lat, lng], 16, { animate: true });
+
+    if (leafletMarker) {
+        leafletMarker.setLatLng([lat, lng]);
+    } else {
+        leafletMarker = L.marker([lat, lng]).addTo(leafletMap);
+    }
+
+    setTimeout(() => leafletMap.invalidateSize(), 100);
+
+    document.getElementById('submitBtn').disabled = !document.getElementById('property_name').value.trim();
+    document.getElementById('aiBtn').disabled = false;
+}
+
+// Property name listener
 document.getElementById('property_name').addEventListener('input', function() {
     const hasCoords = document.getElementById('property_lat').value;
     document.getElementById('submitBtn').disabled = !(this.value.trim() && hasCoords);
@@ -342,13 +537,9 @@ document.getElementById('newPropertyForm').addEventListener('submit', async (e) 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                name,
-                address,
-                icon,
-                latitude: lat,
-                longitude: lng,
-                display_name: displayName,
-                region: region
+                name, address, icon,
+                latitude: lat, longitude: lng,
+                display_name: displayName, region: region
             })
         });
 
@@ -392,11 +583,8 @@ async function generateWithAI() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                address,
-                latitude: lat,
-                longitude: lng,
-                display_name: displayName,
-                region: region
+                address, latitude: lat, longitude: lng,
+                display_name: displayName, region: region
             })
         });
 
@@ -418,7 +606,7 @@ async function generateWithAI() {
     }
 }
 
-// Pre-initialize map for instant display
-initializeMap();
+// Load the appropriate map API
+loadGoogleMapsAPI();
 </script>
 {% endblock %}

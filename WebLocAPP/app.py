@@ -41,6 +41,10 @@ def allowed_file(filename):
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
 
+# Google Maps API Key (for Places Autocomplete and Maps)
+GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
+app.config['GOOGLE_MAPS_API_KEY'] = GOOGLE_MAPS_API_KEY
+
 # Initialize OAuth
 oauth = OAuth(app)
 
@@ -630,7 +634,7 @@ def new_property_page():
     """Page to create a new property"""
     current_user = get_current_user()
     properties = get_user_properties(current_user)
-    return render_template('property_new.html', properties=properties, current_user=current_user)
+    return render_template('property_new.html', properties=properties, current_user=current_user, config=app.config)
 
 @app.route('/general')
 def general_page():
