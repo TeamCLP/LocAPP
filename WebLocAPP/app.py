@@ -697,6 +697,15 @@ def photos_page():
     properties = get_user_properties(current_user)
     return render_template('photos.html', properties=properties, current_user=current_user)
 
+@app.route('/account')
+def account_page():
+    """Account management page"""
+    current_user = get_current_user()
+    if not current_user:
+        return redirect(url_for('login'))
+    properties = get_user_properties(current_user)
+    return render_template('account.html', properties=properties, current_user=current_user)
+
 @app.route('/equipements')
 def equipements_page():
     current_user = get_current_user()
@@ -1442,6 +1451,118 @@ def get_access_photos_limit():
     })
 
 # ============================================
+# Account & Subscription API Routes
+# ============================================
+
+@app.route('/api/account', methods=['GET'])
+@requires_auth
+def get_account_info():
+    """Get account information for logged in user"""
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Non authentifié'}), 401
+
+    account_info = db.get_account_info(current_user.id)
+    if account_info:
+        return jsonify(account_info)
+    return jsonify({'error': 'Compte non trouvé'}), 404
+
+@app.route('/api/subscription', methods=['GET'])
+@requires_auth
+def get_subscription():
+    """Get subscription for logged in user"""
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Non authentifié'}), 401
+
+    subscription = db.get_user_subscription(current_user.id)
+    if subscription:
+        # Calculate duration
+        if subscription['activated_at']:
+            from datetime import datetime
+            try:
+                activated = datetime.fromisoformat(subscription['activated_at'].replace('Z', '+00:00'))
+                now = datetime.now()
+                duration_days = (now - activated.replace(tzinfo=None)).days
+                if duration_days < 30:
+                    subscription['duration'] = f"{duration_days} jours"
+                elif duration_days < 365:
+                    months = duration_days // 30
+                    subscription['duration'] = f"{months} mois"
+                else:
+                    years = duration_days // 365
+                    subscription['duration'] = f"{years} an{'s' if years > 1 else ''}"
+            except Exception:
+                subscription['duration'] = '-'
+        return jsonify(subscription)
+    return jsonify({'error': 'Abonnement non trouvé'}), 404
+
+@app.route('/api/subscription', methods=['PUT'])
+@requires_auth
+def update_subscription():
+    """Update subscription plan"""
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Non authentifié'}), 401
+
+    data = request.json
+    plan = data.get('plan')
+
+    if not plan:
+        return jsonify({'error': 'Plan requis'}), 400
+
+    if db.update_subscription(current_user.id, plan):
+        return jsonify({'message': 'Abonnement mis à jour avec succès'})
+    return jsonify({'error': 'Plan invalide'}), 400
+
+@app.route('/api/account/properties', methods=['GET'])
+@requires_auth
+def get_account_properties():
+    """Get all properties for logged in user (including inactive)"""
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Non authentifié'}), 401
+
+    properties = db.get_all_user_properties(current_user.id)
+    return jsonify(properties)
+
+@app.route('/api/account/properties/<int:property_id>/toggle', methods=['PUT'])
+@requires_auth
+def toggle_property(property_id):
+    """Toggle property active status"""
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Non authentifié'}), 401
+
+    # Verify ownership
+    prop = db.get_property(property_id)
+    if not prop or prop.get('user_id') != current_user.id:
+        return jsonify({'error': 'Propriété non trouvée ou non autorisée'}), 404
+
+    data = request.json
+    is_active = data.get('is_active', True)
+
+    db.toggle_property_active(property_id, is_active)
+    status = 'activée' if is_active else 'désactivée'
+    return jsonify({'message': f'Propriété {status} avec succès'})
+
+@app.route('/api/account/properties/<int:property_id>', methods=['DELETE'])
+@requires_auth
+def delete_property(property_id):
+    """Delete a property and all associated data"""
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Non authentifié'}), 401
+
+    # Verify ownership
+    prop = db.get_property(property_id)
+    if not prop or prop.get('user_id') != current_user.id:
+        return jsonify({'error': 'Propriété non trouvée ou non autorisée'}), 404
+
+    db.delete_property_with_data(property_id)
+    return jsonify({'message': 'Propriété supprimée avec succès'})
+
+# ============================================
 # SuperAdmin Routes (Secure Database Admin)
 # ============================================
 
@@ -1791,6 +1912,81 @@ def superadmin_update_app_config():
     for key, value in data.items():
         db.set_app_config(key, str(value))
     return jsonify({'success': True, 'message': 'Configuration mise à jour'})
+
+# ============================================
+# Guest Preview Routes (Public)
+# ============================================
+
+@app.route('/g/<int:property_id>')
+def guest_preview(property_id):
+    """Public guest preview - Mobile app simulation"""
+    # Get property info
+    property_info = db.get_property(property_id)
+    if not property_info:
+        return "Propriété non trouvée", 404
+
+    # Check if property is active
+    if not property_info.get('is_active', True):
+        return "Cette propriété n'est pas disponible", 404
+
+    # Gather all property data
+    property_data = {
+        'property': property_info,
+        'general': db.get_general_info(property_id) or {},
+        'wifi': db.get_wifi_config(property_id) or {},
+        'address': db.get_address(property_id) or {},
+        'parking': db.get_parking_info(property_id) or {},
+        'access': db.get_access_info(property_id) or {},
+        'contact': db.get_contact_info(property_id) or {},
+        'activities': db.get_all_activities(property_id) or [],
+        'services': db.get_all_nearby_services(property_id) or [],
+        'amenities': db.get_available_amenities(property_id) or [],
+        'photos': db.get_all_photos(property_id) or [],
+        'access_photos': db.get_all_access_photos(property_id) or [],
+        'emergency_numbers': db.get_all_emergency_numbers(property_id) or []
+    }
+
+    return render_template('guest_preview.html',
+        property=property_info,
+        general=property_data['general'],
+        wifi=property_data['wifi'],
+        address=property_data['address'],
+        parking=property_data['parking'],
+        access=property_data['access'],
+        contact=property_data['contact'],
+        property_data=property_data
+    )
+
+@app.route('/api/guest/<int:property_id>')
+def api_guest_data(property_id):
+    """API endpoint to get all guest data for a property"""
+    # Get property info
+    property_info = db.get_property(property_id)
+    if not property_info:
+        return jsonify({'error': 'Property not found'}), 404
+
+    # Check if property is active
+    if not property_info.get('is_active', True):
+        return jsonify({'error': 'Property not available'}), 404
+
+    # Gather all property data
+    property_data = {
+        'property': property_info,
+        'general': db.get_general_info(property_id) or {},
+        'wifi': db.get_wifi_config(property_id) or {},
+        'address': db.get_address(property_id) or {},
+        'parking': db.get_parking_info(property_id) or {},
+        'access': db.get_access_info(property_id) or {},
+        'contact': db.get_contact_info(property_id) or {},
+        'activities': db.get_all_activities(property_id) or [],
+        'services': db.get_all_nearby_services(property_id) or [],
+        'amenities': db.get_available_amenities(property_id) or [],
+        'photos': db.get_all_photos(property_id) or [],
+        'access_photos': db.get_all_access_photos(property_id) or [],
+        'emergency_numbers': db.get_all_emergency_numbers(property_id) or []
+    }
+
+    return jsonify(property_data)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)

@@ -433,7 +433,7 @@ async function loadAccessPhotos() {
 
         gallery.innerHTML = photos.map(photo => `
             <div class="access-photo-card" data-id="${photo.id}">
-                <img src="/static/uploads/${photo.filename}" alt="${photo.title || 'Photo accès'}">
+                <img src="/static/uploads/photos/${photo.filename}" alt="${photo.title || 'Photo accès'}">
                 <div class="photo-actions">
                     <button class="btn-delete-photo" onclick="deleteAccessPhoto(${photo.id})" title="Supprimer">✕</button>
                 </div>

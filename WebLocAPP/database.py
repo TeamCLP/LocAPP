@@ -293,6 +293,24 @@ class Database:
             )
         ''')
 
+        # Table pour les abonnements
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS subscriptions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL UNIQUE,
+                plan TEXT NOT NULL DEFAULT 'decouverte',
+                plan_name TEXT DEFAULT 'Découverte',
+                price REAL DEFAULT 0,
+                max_properties INTEGER DEFAULT 1,
+                activated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                next_billing TIMESTAMP,
+                is_active BOOLEAN DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            )
+        ''')
+
         conn.commit()
 
         # Migrer les données existantes et insérer les valeurs par défaut
@@ -1825,3 +1843,135 @@ class Database:
         results = conn.execute('SELECT * FROM amenities WHERE property_id=? AND is_available=1 ORDER BY category, display_order', (property_id,)).fetchall()
         conn.close()
         return [dict(row) for row in results]
+
+    # ==================== Subscriptions ====================
+
+    SUBSCRIPTION_PLANS = {
+        'decouverte': {'name': 'Découverte', 'price': 0, 'max_properties': 1},
+        'proprietaire': {'name': 'Propriétaire', 'price': 9, 'max_properties': 3},
+        'gestionnaire': {'name': 'Gestionnaire', 'price': 29, 'max_properties': -1}  # -1 = unlimited
+    }
+
+    def get_user_subscription(self, user_id):
+        """Get the subscription for a user, create default if not exists"""
+        conn = self.get_connection()
+        result = conn.execute('SELECT * FROM subscriptions WHERE user_id=?', (user_id,)).fetchone()
+
+        if not result:
+            # Create default subscription (Découverte)
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO subscriptions (user_id, plan, plan_name, price, max_properties)
+                VALUES (?, 'decouverte', 'Découverte', 0, 1)
+            ''', (user_id,))
+            conn.commit()
+            result = conn.execute('SELECT * FROM subscriptions WHERE user_id=?', (user_id,)).fetchone()
+
+        conn.close()
+        return dict(result) if result else None
+
+    def update_subscription(self, user_id, plan):
+        """Update user subscription to a new plan"""
+        if plan not in self.SUBSCRIPTION_PLANS:
+            return False
+
+        plan_info = self.SUBSCRIPTION_PLANS[plan]
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        # Check if subscription exists
+        cursor.execute('SELECT id FROM subscriptions WHERE user_id=?', (user_id,))
+        if cursor.fetchone():
+            cursor.execute('''
+                UPDATE subscriptions
+                SET plan=?, plan_name=?, price=?, max_properties=?, updated_at=CURRENT_TIMESTAMP
+                WHERE user_id=?
+            ''', (plan, plan_info['name'], plan_info['price'], plan_info['max_properties'], user_id))
+        else:
+            cursor.execute('''
+                INSERT INTO subscriptions (user_id, plan, plan_name, price, max_properties)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (user_id, plan, plan_info['name'], plan_info['price'], plan_info['max_properties']))
+
+        conn.commit()
+        conn.close()
+        return True
+
+    def can_add_property(self, user_id):
+        """Check if user can add more properties based on subscription"""
+        subscription = self.get_user_subscription(user_id)
+        if not subscription:
+            return False
+
+        max_props = subscription['max_properties']
+        if max_props == -1:  # Unlimited
+            return True
+
+        current_count = self.count_user_properties(user_id)
+        return current_count < max_props
+
+    def count_user_properties(self, user_id):
+        """Count properties for a user"""
+        conn = self.get_connection()
+        result = conn.execute('SELECT COUNT(*) FROM properties WHERE user_id=?', (user_id,)).fetchone()
+        conn.close()
+        return result[0] if result else 0
+
+    # ==================== Account Management ====================
+
+    def get_all_user_properties(self, user_id):
+        """Get all properties for a user (including inactive) with city"""
+        conn = self.get_connection()
+        results = conn.execute('''
+            SELECT p.*, a.city
+            FROM properties p
+            LEFT JOIN address a ON p.id = a.property_id
+            WHERE p.user_id = ?
+            ORDER BY p.display_order
+        ''', (user_id,)).fetchall()
+        conn.close()
+        return [dict(row) for row in results]
+
+    def toggle_property_active(self, property_id, is_active):
+        """Toggle property active status"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE properties
+            SET is_active=?, updated_at=CURRENT_TIMESTAMP
+            WHERE id=?
+        ''', (1 if is_active else 0, property_id))
+        conn.commit()
+        conn.close()
+
+    def delete_property_with_data(self, property_id):
+        """Delete a property and all associated data"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        # Delete all associated data
+        tables = [
+            'general_info', 'wifi_config', 'address', 'parking_info',
+            'access_info', 'contact_info', 'emergency_numbers', 'nearby_services',
+            'activities', 'activity_categories', 'amenities', 'checkout_instructions',
+            'photos', 'access_photos'
+        ]
+
+        for table in tables:
+            cursor.execute(f'DELETE FROM {table} WHERE property_id=?', (property_id,))
+
+        # Delete the property itself
+        cursor.execute('DELETE FROM properties WHERE id=?', (property_id,))
+
+        conn.commit()
+        conn.close()
+
+    def get_account_info(self, user_id):
+        """Get account info for a user"""
+        conn = self.get_connection()
+        result = conn.execute('''
+            SELECT id, email, firstname, lastname, created_at, updated_at
+            FROM users WHERE id=?
+        ''', (user_id,)).fetchone()
+        conn.close()
+        return dict(result) if result else None

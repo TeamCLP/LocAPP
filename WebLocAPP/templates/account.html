@@ -1,0 +1,742 @@
+{% extends "base.html" %}
+
+{% block title %}Mon Compte - Administration LocApp{% endblock %}
+
+{% block content %}
+<div class="account-page">
+    <!-- User Info Section -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Mon Compte</h2>
+        </div>
+        <div class="account-info">
+            <div class="user-avatar">
+                <span>👤</span>
+            </div>
+            <div class="user-details">
+                <h3 id="userName">{{ current_user.email }}</h3>
+                <p class="user-email">{{ current_user.email }}</p>
+                <p class="user-since">Membre depuis le <span id="memberSince">-</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subscription Section -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Mon Abonnement</h2>
+        </div>
+
+        <div class="current-subscription" id="currentSubscription">
+            <div class="subscription-badge" id="subscriptionBadge">
+                <span class="badge-icon">🎁</span>
+                <span class="badge-name">Découverte</span>
+            </div>
+            <div class="subscription-details">
+                <p><strong>Date d'activation:</strong> <span id="activationDate">-</span></p>
+                <p><strong>Durée:</strong> <span id="subscriptionDuration">-</span></p>
+                <p><strong>Prochaine facturation:</strong> <span id="nextBilling">-</span></p>
+            </div>
+        </div>
+
+        <h3 class="section-subtitle">Changer d'abonnement</h3>
+        <div class="subscription-plans">
+            <!-- Free Plan -->
+            <div class="plan-card" data-plan="decouverte">
+                <div class="plan-header">
+                    <h4>Découverte</h4>
+                    <div class="plan-price">Gratuit</div>
+                </div>
+                <ul class="plan-features">
+                    <li>1 propriété</li>
+                    <li>QR Code WiFi</li>
+                    <li>Informations d'accès</li>
+                    <li>Contact propriétaire</li>
+                </ul>
+                <button class="btn btn-outline btn-select-plan" data-plan="decouverte">Plan actuel</button>
+            </div>
+
+            <!-- Pro Plan -->
+            <div class="plan-card popular" data-plan="proprietaire">
+                <div class="plan-badge">Populaire</div>
+                <div class="plan-header">
+                    <h4>Propriétaire</h4>
+                    <div class="plan-price">9€<span>/mois</span></div>
+                </div>
+                <ul class="plan-features">
+                    <li>Jusqu'à 3 propriétés</li>
+                    <li>Activités et recommandations</li>
+                    <li>Services à proximité</li>
+                    <li>Support prioritaire</li>
+                </ul>
+                <button class="btn btn-primary btn-select-plan" data-plan="proprietaire">Choisir ce plan</button>
+            </div>
+
+            <!-- Business Plan -->
+            <div class="plan-card" data-plan="gestionnaire">
+                <div class="plan-header">
+                    <h4>Gestionnaire</h4>
+                    <div class="plan-price">29€<span>/mois</span></div>
+                </div>
+                <ul class="plan-features">
+                    <li>Propriétés illimitées</li>
+                    <li>Thèmes personnalisés</li>
+                    <li>Export QR Codes en lot</li>
+                    <li>Support dédié</li>
+                </ul>
+                <button class="btn btn-outline btn-select-plan" data-plan="gestionnaire">Choisir ce plan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Properties Section -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Mes Propriétés</h2>
+            <span class="property-count" id="propertyCount">0/1</span>
+        </div>
+
+        <div class="properties-list" id="propertiesList">
+            <p class="loading-text">Chargement des propriétés...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Preview Mobile -->
+<div class="modal" id="previewModal">
+    <div class="modal-content modal-preview">
+        <div class="modal-header">
+            <h3>Aperçu Mobile</h3>
+            <button class="modal-close" onclick="closePreviewModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="preview-device">
+                <div class="preview-frame">
+                    <iframe id="previewFrame" src="" frameborder="0"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.account-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.account-page .card {
+    margin-bottom: 1.5rem;
+}
+
+/* User Info */
+.account-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.user-avatar {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+}
+
+.user-details h3 {
+    margin: 0;
+    color: var(--text-color);
+}
+
+.user-email {
+    color: var(--text-muted);
+    margin: 0.25rem 0;
+}
+
+.user-since {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+/* Subscription */
+.current-subscription {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.subscription-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.subscription-badge .badge-icon {
+    font-size: 2rem;
+}
+
+.subscription-badge .badge-name {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.subscription-details p {
+    margin: 0.5rem 0;
+    color: var(--text-color);
+}
+
+.section-subtitle {
+    padding: 0 1.5rem;
+    color: var(--text-color);
+    margin: 1.5rem 0 1rem;
+}
+
+/* Subscription Plans */
+.subscription-plans {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    padding: 0 1.5rem 1.5rem;
+}
+
+.plan-card {
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.plan-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.plan-card.popular {
+    border-color: var(--primary-color);
+    background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.05) 0%, rgba(var(--primary-rgb), 0.1) 100%);
+}
+
+.plan-card.active {
+    border-color: #10b981;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(16, 185, 129, 0.1) 100%);
+}
+
+.plan-badge {
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    background: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.plan-header {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.plan-header h4 {
+    margin: 0;
+    color: var(--text-color);
+}
+
+.plan-price {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-top: 0.5rem;
+}
+
+.plan-price span {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+.plan-features {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+}
+
+.plan-features li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.plan-features li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #10b981;
+}
+
+.btn-select-plan {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+/* Properties List */
+.property-count {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+.properties-list {
+    padding: 1rem 1.5rem;
+}
+
+.property-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.property-item:hover {
+    border-color: var(--primary-color);
+}
+
+.property-item.inactive {
+    opacity: 0.6;
+    background: #f9fafb;
+}
+
+.property-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.property-icon {
+    font-size: 2rem;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    border-radius: 10px;
+}
+
+.property-details h4 {
+    margin: 0;
+    color: var(--text-color);
+}
+
+.property-details p {
+    margin: 0.25rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.property-status {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: 0.25rem;
+}
+
+.property-status.active {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.property-status.inactive {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.property-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.property-actions button {
+    padding: 0.5rem 0.75rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.btn-preview {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-preview:hover {
+    background: #2563eb;
+}
+
+.btn-toggle {
+    background: #f59e0b;
+    color: white;
+}
+
+.btn-toggle:hover {
+    background: #d97706;
+}
+
+.btn-toggle.activate {
+    background: #10b981;
+}
+
+.btn-toggle.activate:hover {
+    background: #059669;
+}
+
+.btn-delete-prop {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-delete-prop:hover {
+    background: #dc2626;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+
+/* Preview Modal */
+.modal-preview {
+    max-width: 400px;
+    max-height: 90vh;
+}
+
+.preview-device {
+    display: flex;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.preview-frame {
+    width: 320px;
+    height: 568px;
+    border: 8px solid #1a1a2e;
+    border-radius: 36px;
+    overflow: hidden;
+    background: white;
+}
+
+.preview-frame iframe {
+    width: 100%;
+    height: 100%;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .account-info {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .current-subscription {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .property-item {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .property-info {
+        flex-direction: column;
+    }
+
+    .property-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Plan limits configuration
+const PLAN_LIMITS = {
+    'decouverte': { maxProperties: 1, price: 0, icon: '🎁' },
+    'proprietaire': { maxProperties: 3, price: 9, icon: '🏠' },
+    'gestionnaire': { maxProperties: -1, price: 29, icon: '🏢' } // -1 = unlimited
+};
+
+let currentSubscription = null;
+let userProperties = [];
+
+// Load user data
+async function loadUserData() {
+    try {
+        const response = await fetchAPI('/api/account');
+        if (response) {
+            document.getElementById('memberSince').textContent = formatDate(response.created_at);
+            if (response.name) {
+                document.getElementById('userName').textContent = response.name;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading user data:', error);
+    }
+}
+
+// Load subscription data
+async function loadSubscription() {
+    try {
+        const response = await fetchAPI('/api/subscription');
+        currentSubscription = response;
+
+        const badge = document.getElementById('subscriptionBadge');
+        const planConfig = PLAN_LIMITS[response.plan] || PLAN_LIMITS['decouverte'];
+
+        badge.querySelector('.badge-icon').textContent = planConfig.icon;
+        badge.querySelector('.badge-name').textContent = response.plan_name || 'Découverte';
+
+        document.getElementById('activationDate').textContent = formatDate(response.activated_at);
+        document.getElementById('subscriptionDuration').textContent = response.duration || '-';
+        document.getElementById('nextBilling').textContent = response.next_billing ? formatDate(response.next_billing) : 'N/A (gratuit)';
+
+        // Update plan cards to show current plan
+        updatePlanCards(response.plan);
+
+    } catch (error) {
+        console.error('Error loading subscription:', error);
+        // Default to free plan
+        currentSubscription = { plan: 'decouverte', plan_name: 'Découverte' };
+        updatePlanCards('decouverte');
+    }
+}
+
+// Update plan cards UI
+function updatePlanCards(currentPlan) {
+    document.querySelectorAll('.plan-card').forEach(card => {
+        const plan = card.dataset.plan;
+        const btn = card.querySelector('.btn-select-plan');
+
+        card.classList.remove('active');
+
+        if (plan === currentPlan) {
+            card.classList.add('active');
+            btn.textContent = 'Plan actuel';
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-outline');
+            btn.disabled = true;
+        } else {
+            btn.textContent = 'Choisir ce plan';
+            btn.disabled = false;
+        }
+    });
+}
+
+// Load properties
+async function loadProperties() {
+    const list = document.getElementById('propertiesList');
+    const countEl = document.getElementById('propertyCount');
+
+    try {
+        const properties = await fetchAPI('/api/account/properties');
+        userProperties = properties || [];
+
+        const plan = currentSubscription?.plan || 'decouverte';
+        const limit = PLAN_LIMITS[plan]?.maxProperties || 1;
+        const limitText = limit === -1 ? '∞' : limit;
+
+        countEl.textContent = `${userProperties.length}/${limitText}`;
+
+        if (userProperties.length === 0) {
+            list.innerHTML = `
+                <div class="empty-state">
+                    <span style="font-size: 3rem;">🏠</span>
+                    <p>Aucune propriété pour le moment</p>
+                    <p style="font-size: 0.85rem;">Créez votre première propriété pour commencer</p>
+                </div>
+            `;
+            return;
+        }
+
+        list.innerHTML = userProperties.map(prop => `
+            <div class="property-item ${prop.is_active ? '' : 'inactive'}" data-id="${prop.id}">
+                <div class="property-info">
+                    <div class="property-icon">${prop.icon || '🏠'}</div>
+                    <div class="property-details">
+                        <h4>${prop.name}</h4>
+                        <p>${prop.region || ''} ${prop.city ? '- ' + prop.city : ''}</p>
+                        <span class="property-status ${prop.is_active ? 'active' : 'inactive'}">
+                            ${prop.is_active ? '✓ Actif' : '✗ Inactif'}
+                        </span>
+                    </div>
+                </div>
+                <div class="property-actions">
+                    <button class="btn-preview" onclick="previewProperty(${prop.id})" title="Aperçu">
+                        👁️ Rendu
+                    </button>
+                    <button class="btn-toggle ${prop.is_active ? '' : 'activate'}" onclick="toggleProperty(${prop.id}, ${prop.is_active})" title="${prop.is_active ? 'Désactiver' : 'Activer'}">
+                        ${prop.is_active ? '⏸️ Désactiver' : '▶️ Activer'}
+                    </button>
+                    <button class="btn-delete-prop" onclick="deleteProperty(${prop.id}, '${prop.name}')" title="Supprimer">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        list.innerHTML = '<p class="empty-state">Erreur lors du chargement des propriétés</p>';
+    }
+}
+
+// Toggle property active status
+async function toggleProperty(propertyId, currentStatus) {
+    try {
+        const response = await fetch(`/api/account/properties/${propertyId}/toggle`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ is_active: !currentStatus })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert(result.message, 'success');
+            loadProperties();
+        } else {
+            showAlert(result.error || 'Erreur', 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de connexion', 'error');
+    }
+}
+
+// Delete property
+async function deleteProperty(propertyId, propertyName) {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer "${propertyName}" ?\n\nCette action est irréversible et supprimera toutes les données associées.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/account/properties/${propertyId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showAlert('Propriété supprimée', 'success');
+            loadProperties();
+            // Refresh page to update property selector
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showAlert(result.error || 'Erreur', 'error');
+        }
+    } catch (error) {
+        showAlert('Erreur de connexion', 'error');
+    }
+}
+
+// Preview property (mobile view)
+function previewProperty(propertyId) {
+    const modal = document.getElementById('previewModal');
+    const iframe = document.getElementById('previewFrame');
+
+    // Load the guest view for this property
+    iframe.src = `/g/${propertyId}`;
+    modal.classList.add('show');
+}
+
+// Close preview modal
+function closePreviewModal() {
+    document.getElementById('previewModal').classList.remove('show');
+    document.getElementById('previewFrame').src = '';
+}
+
+// Plan selection
+document.querySelectorAll('.btn-select-plan').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const plan = this.dataset.plan;
+        if (plan === currentSubscription?.plan) return;
+
+        if (!confirm(`Voulez-vous passer au plan "${plan.charAt(0).toUpperCase() + plan.slice(1)}" ?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/subscription', {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ plan: plan })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showAlert('Abonnement mis à jour', 'success');
+                loadSubscription();
+                loadProperties();
+            } else {
+                showAlert(result.error || 'Erreur', 'error');
+            }
+        } catch (error) {
+            showAlert('Erreur de connexion', 'error');
+        }
+    });
+});
+
+// Modal close on outside click
+document.getElementById('previewModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closePreviewModal();
+    }
+});
+
+// Close on Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closePreviewModal();
+    }
+});
+
+// Initialize
+loadUserData();
+loadSubscription();
+loadProperties();
+</script>
+{% endblock %}

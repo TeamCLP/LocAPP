@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ property.name or 'LocApp' }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Theme colors - Provence */
+            --accent-color: #E67E22;
+            --ocre-light: #F5DEB3;
+            --vert-provence: #8CB9A0;
+            --terracotta: #D35400;
+
+            /* System colors */
+            --bg-primary: #F2F2F7;
+            --bg-secondary: #FFFFFF;
+            --text-primary: #1C1C1E;
+            --text-secondary: #8E8E93;
+            --separator: #E5E5EA;
+
+            /* Spacing */
+            --safe-area-top: 47px;
+            --safe-area-bottom: 34px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* App Container */
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: calc(80px + var(--safe-area-bottom));
+        }
+
+        /* Status Bar */
+        .status-bar {
+            height: var(--safe-area-top);
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 8px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .status-bar-time {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Navigation Header */
+        .nav-header {
+            background: var(--bg-secondary);
+            padding: 12px 16px;
+            border-bottom: 0.5px solid var(--separator);
+            position: sticky;
+            top: var(--safe-area-top);
+            z-index: 99;
+        }
+
+        .nav-header h1 {
+            font-size: 17px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .nav-back {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Tab Bar */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: calc(80px + var(--safe-area-bottom));
+            background: var(--bg-secondary);
+            border-top: 0.5px solid var(--separator);
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-around;
+            padding-top: 8px;
+            z-index: 100;
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px 16px;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+
+        .tab-item.active {
+            color: var(--accent-color);
+        }
+
+        .tab-icon {
+            font-size: 24px;
+        }
+
+        .tab-label {
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        /* Screen Container */
+        .screen {
+            display: none;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Scroll Container */
+        .scroll-content {
+            padding: 16px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card-header {
+            padding: 16px;
+            border-bottom: 0.5px solid var(--separator);
+        }
+
+        .card-content {
+            padding: 16px;
+        }
+
+        /* Hero Image */
+        .hero-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--ocre-light) 0%, var(--vert-provence) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .hero-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 16px;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.6));
+            border-radius: 0 0 16px 16px;
+        }
+
+        .hero-title {
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        /* Welcome Section */
+        .welcome-section {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .welcome-title {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-color), var(--terracotta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .welcome-subtitle {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        /* Quick Access Grid */
+        .quick-access-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .quick-access-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .quick-access-card:active {
+            transform: scale(0.98);
+        }
+
+        .quick-access-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .quick-access-icon.blue { color: #007AFF; }
+        .quick-access-icon.red { color: #FF3B30; }
+        .quick-access-icon.purple { color: #AF52DE; }
+        .quick-access-icon.orange { color: #FF9500; }
+
+        .quick-access-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .quick-access-subtitle {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Info Rows */
+        .info-list {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 0.5px solid var(--separator);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-row:active {
+            background: rgba(0,0,0,0.05);
+        }
+
+        .info-row-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-right: 12px;
+        }
+
+        .info-row-content {
+            flex: 1;
+        }
+
+        .info-row-title {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .info-row-detail {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .info-row-arrow {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Section Headers */
+        .section-header {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 24px 16px 8px;
+        }
+
+        /* Activity Sections */
+        .activity-section {
+            margin-bottom: 12px;
+        }
+
+        .activity-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .activity-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .activity-header-icon {
+            font-size: 22px;
+        }
+
+        .activity-header-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .activity-header-chevron {
+            color: var(--text-secondary);
+            transition: transform 0.3s;
+        }
+
+        .activity-header-chevron.expanded {
+            transform: rotate(180deg);
+        }
+
+        .activity-items {
+            display: none;
+            padding-top: 8px;
+        }
+
+        .activity-items.expanded {
+            display: block;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            margin-bottom: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+
+        .activity-item-emoji {
+            font-size: 24px;
+        }
+
+        .activity-item-content {
+            flex: 1;
+        }
+
+        .activity-item-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .activity-item-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Contact Section */
+        .contact-avatar {
+            text-align: center;
+            padding: 24px 0;
+        }
+
+        .avatar-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FED7AA, #FEF08A);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 48px;
+        }
+
+        .avatar-name {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .avatar-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .contact-button {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .contact-button:active {
+            transform: scale(0.98);
+        }
+
+        .contact-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .contact-icon.green { background: #34C759; }
+        .contact-icon.blue { background: #007AFF; }
+        .contact-icon.whatsapp { background: #25D366; }
+        .contact-icon.orange { background: #FF9500; }
+
+        .contact-text {
+            flex: 1;
+        }
+
+        .contact-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .contact-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .contact-arrow {
+            color: var(--text-secondary);
+        }
+
+        /* Emergency Numbers */
+        .emergency-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 0.5px solid var(--separator);
+        }
+
+        .emergency-row:last-child {
+            border-bottom: none;
+        }
+
+        .emergency-title {
+            font-size: 15px;
+        }
+
+        .emergency-number {
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        /* Detail View */
+        .detail-view {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            z-index: 200;
+            animation: slideIn 0.3s ease;
+        }
+
+        .detail-view.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        .detail-content {
+            height: calc(100vh - var(--safe-area-top) - 60px);
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        /* WiFi Detail */
+        .wifi-icon-large {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .wifi-qr-container {
+            background: #F5F5F5;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            margin: 16px 0;
+        }
+
+        .wifi-qr {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .wifi-qr canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .wifi-credentials {
+            background: #F5F5F5;
+            border-radius: 16px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .wifi-field {
+            margin-bottom: 16px;
+        }
+
+        .wifi-field:last-child {
+            margin-bottom: 0;
+        }
+
+        .wifi-field-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .wifi-field-value {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-secondary);
+            padding: 12px;
+            border-radius: 10px;
+        }
+
+        .wifi-field-text {
+            font-family: 'SF Mono', monospace;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: #007AFF;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        /* Tip Card */
+        .tip-card {
+            background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        .tip-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .tip-text {
+            font-size: 13px;
+            color: #92400E;
+        }
+
+        /* Map placeholder */
+        .map-container {
+            height: 200px;
+            background: linear-gradient(135deg, var(--ocre-light), var(--vert-provence));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .map-placeholder {
+            text-align: center;
+            color: white;
+        }
+
+        .map-icon {
+            font-size: 40px;
+            margin-bottom: 8px;
+        }
+
+        /* Access Photos */
+        .access-photos {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .access-photo {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
+        /* Keybox code */
+        .keybox-code {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #F5F5F5;
+            padding: 16px;
+            border-radius: 12px;
+            margin: 16px 0;
+        }
+
+        .keybox-icon {
+            font-size: 28px;
+            color: var(--accent-color);
+        }
+
+        .keybox-value {
+            font-family: 'SF Mono', monospace;
+            font-size: 28px;
+            font-weight: 700;
+            flex: 1;
+        }
+
+        /* Amenity List */
+        .amenity-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .amenity-tag {
+            background: var(--ocre-light);
+            color: var(--terracotta);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Check list */
+        .check-list {
+            list-style: none;
+        }
+
+        .check-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 0.5px solid var(--separator);
+        }
+
+        .check-list li:last-child {
+            border-bottom: none;
+        }
+
+        .check-icon {
+            font-size: 18px;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        /* Responsive adjustments for iframe embed */
+        @media (max-height: 600px) {
+            :root {
+                --safe-area-top: 20px;
+                --safe-area-bottom: 0px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span class="status-bar-time" id="statusTime">9:41</span>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Tab Screens -->
+
+            <!-- Accueil Screen -->
+            <div class="screen active" id="screen-accueil">
+                <div class="nav-header">
+                    <h1>Accueil</h1>
+                </div>
+                <div class="scroll-content">
+                    <!-- Hero -->
+                    <div class="hero-image" id="heroImage">
+                        {% if general.header_image %}
+                        <img src="/static/uploads/headers/{{ general.header_image }}" alt="{{ property.name }}">
+                        {% endif %}
+                        <div class="hero-overlay">
+                            <div class="hero-title" id="propertyName">{{ property.name or 'Bienvenue' }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Welcome -->
+                    <div class="welcome-section">
+                        <div class="welcome-title">Bienvenue !</div>
+                        <div class="welcome-subtitle" id="welcomeMessage">{{ general.welcome_message or 'Nous sommes ravis de vous accueillir.' }}</div>
+                    </div>
+
+                    <!-- Info Card -->
+                    <div class="card">
+                        <div class="card-content">
+                            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                <span style="font-size: 22px;">☀️</span>
+                                <div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">Profitez de votre séjour</div>
+                                    <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;" id="descriptionText">
+                                        {{ general.description or 'Ce petit coin de paradis est désormais le vôtre le temps de votre séjour.' }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Access -->
+                    <div style="font-weight: 600; margin-bottom: 12px;">Accès rapide</div>
+                    <div class="quick-access-grid">
+                        <div class="quick-access-card" onclick="openDetail('wifi')">
+                            <div class="quick-access-icon blue">📶</div>
+                            <div class="quick-access-title">WiFi</div>
+                            <div class="quick-access-subtitle">Code & infos</div>
+                        </div>
+                        <div class="quick-access-card" onclick="openDetail('address')">
+                            <div class="quick-access-icon red">📍</div>
+                            <div class="quick-access-title">Adresse</div>
+                            <div class="quick-access-subtitle">GPS & accès</div>
+                        </div>
+                        <div class="quick-access-card" onclick="openDetail('photos')">
+                            <div class="quick-access-icon purple">📷</div>
+                            <div class="quick-access-title">Photos</div>
+                            <div class="quick-access-subtitle">Galerie</div>
+                        </div>
+                        <div class="quick-access-card" onclick="openDetail('emergency')">
+                            <div class="quick-access-icon orange">📞</div>
+                            <div class="quick-access-title">Urgences</div>
+                            <div class="quick-access-subtitle">Numéros utiles</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Infos Screen -->
+            <div class="screen" id="screen-infos">
+                <div class="nav-header">
+                    <h1>Infos Pratiques</h1>
+                </div>
+                <div class="scroll-content">
+                    <div class="section-header">Connexion Internet</div>
+                    <div class="info-list">
+                        <div class="info-row" onclick="openDetail('wifi')">
+                            <div class="info-row-icon">📶</div>
+                            <div class="info-row-content">
+                                <div class="info-row-title">WiFi</div>
+                                <div class="info-row-detail">QR Code & mot de passe</div>
+                            </div>
+                            <div class="info-row-arrow">›</div>
+                        </div>
+                    </div>
+
+                    <div class="section-header">Accès au logement</div>
+                    <div class="info-list">
+                        <div class="info-row" onclick="openDetail('address')">
+                            <div class="info-row-icon">📍</div>
+                            <div class="info-row-content">
+                                <div class="info-row-title">Adresse</div>
+                                <div class="info-row-detail" id="addressPreview">{{ address.full_address or 'Voir l\'adresse' }}</div>
+                            </div>
+                            <div class="info-row-arrow">›</div>
+                        </div>
+                        <div class="info-row" onclick="openDetail('parking')">
+                            <div class="info-row-icon">🚗</div>
+                            <div class="info-row-content">
+                                <div class="info-row-title">Parking</div>
+                                <div class="info-row-detail" id="parkingPreview">{{ parking.description or 'Informations parking' }}</div>
+                            </div>
+                            <div class="info-row-arrow">›</div>
+                        </div>
+                        <div class="info-row" onclick="openDetail('access')">
+                            <div class="info-row-icon">🔑</div>
+                            <div class="info-row-content">
+                                <div class="info-row-title">Clés & Accès</div>
+                                <div class="info-row-detail">Arrivée / Départ</div>
+                            </div>
+                            <div class="info-row-arrow">›</div>
+                        </div>
+                    </div>
+
+                    <div class="section-header">Équipements</div>
+                    <div class="info-list">
+                        <div class="info-row" onclick="openDetail('equipements')">
+                            <div class="info-row-icon">🛋️</div>
+                            <div class="info-row-content">
+                                <div class="info-row-title">Équipements</div>
+                                <div class="info-row-detail">Liste complète</div>
+                            </div>
+                            <div class="info-row-arrow">›</div>
+                        </div>
+                    </div>
+
+                    <div class="section-header">En cas d'urgence</div>
+                    <div class="info-list" id="emergencyList">
+                        <!-- Emergency numbers loaded dynamically -->
+                    </div>
+
+                    <div class="section-header">Services à proximité</div>
+                    <div class="info-list" id="servicesList">
+                        <!-- Services loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activités Screen -->
+            <div class="screen" id="screen-activites">
+                <div class="nav-header">
+                    <h1>Activités</h1>
+                </div>
+                <div class="scroll-content">
+                    <div class="welcome-section">
+                        <div class="welcome-title" style="font-size: 20px;">Découvrez la région</div>
+                        <div class="welcome-subtitle">Nos recommandations autour de votre logement</div>
+                    </div>
+
+                    <div id="activitiesList">
+                        <!-- Activities loaded dynamically -->
+                    </div>
+
+                    <div class="tip-card">
+                        <div class="tip-icon">💡</div>
+                        <div style="font-weight: 600; margin-bottom: 4px;">Conseil</div>
+                        <div class="tip-text">En été, privilégiez les visites tôt le matin ou en fin de journée !</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Screen -->
+            <div class="screen" id="screen-contact">
+                <div class="nav-header">
+                    <h1>Contact</h1>
+                </div>
+                <div class="scroll-content">
+                    <div class="contact-avatar">
+                        {% if contact.avatar %}
+                        <div class="avatar-circle" id="hostAvatar" style="overflow: hidden;">
+                            <img src="/static/uploads/photos/{{ contact.avatar }}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        {% else %}
+                        <div class="avatar-circle" id="hostAvatar">👤</div>
+                        {% endif %}
+                        <div class="avatar-name" id="hostName">{{ contact.host_name or 'Votre hôte' }}</div>
+                        <div class="avatar-subtitle">À votre service pour un séjour parfait</div>
+                    </div>
+
+                    <div id="contactButtons">
+                        <!-- Contact buttons loaded dynamically -->
+                    </div>
+
+                    <div class="card" style="margin-top: 20px;">
+                        <div class="card-content">
+                            <div style="font-weight: 600; margin-bottom: 12px;">💡 Conseils</div>
+                            <ul style="font-size: 13px; color: var(--text-secondary); padding-left: 20px; line-height: 1.8;">
+                                <li>Pour les questions non urgentes, privilégiez le SMS ou WhatsApp</li>
+                                <li>Pour les urgences, n'hésitez pas à appeler directement</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div style="font-weight: 600;">Numéros utiles</div>
+                        </div>
+                        <div class="card-content" id="emergencyNumbers">
+                            <!-- Emergency numbers -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <button class="tab-item active" onclick="switchTab('accueil')">
+                <span class="tab-icon">🏠</span>
+                <span class="tab-label">Accueil</span>
+            </button>
+            <button class="tab-item" onclick="switchTab('infos')">
+                <span class="tab-icon">ℹ️</span>
+                <span class="tab-label">Infos</span>
+            </button>
+            <button class="tab-item" onclick="switchTab('activites')">
+                <span class="tab-icon">⭐</span>
+                <span class="tab-label">Activités</span>
+            </button>
+            <button class="tab-item" onclick="switchTab('contact')">
+                <span class="tab-icon">✉️</span>
+                <span class="tab-label">Contact</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Detail Views -->
+    <div class="detail-view" id="detail-wifi">
+        <div class="status-bar"><span class="status-bar-time">9:41</span></div>
+        <div class="nav-header" style="position: relative;">
+            <button class="nav-back" onclick="closeDetail('wifi')">‹ Retour</button>
+            <h1>WiFi</h1>
+        </div>
+        <div class="detail-content">
+            <div class="wifi-icon-large">📶</div>
+            <div style="text-align: center;">
+                <div style="font-size: 18px; font-weight: 600;">Connexion WiFi</div>
+                <div style="color: var(--text-secondary); font-size: 14px;">Scannez le QR code ou entrez le mot de passe</div>
+            </div>
+
+            <div class="wifi-qr-container">
+                <div class="wifi-qr">
+                    <canvas id="wifiQRCode"></canvas>
+                </div>
+                <div style="margin-top: 12px; font-size: 13px; color: var(--text-secondary);">📱 Scannez avec l'appareil photo</div>
+            </div>
+
+            <div style="font-weight: 600; margin-bottom: 12px;">Ou connectez-vous manuellement</div>
+
+            <div class="wifi-credentials">
+                <div class="wifi-field">
+                    <div class="wifi-field-label">Nom du réseau (SSID)</div>
+                    <div class="wifi-field-value">
+                        <span>📶</span>
+                        <span class="wifi-field-text" id="wifiSSID">{{ wifi.ssid or '-' }}</span>
+                        <button class="copy-btn" onclick="copyText('{{ wifi.ssid or '' }}')">📋</button>
+                    </div>
+                </div>
+                <div class="wifi-field">
+                    <div class="wifi-field-label">Mot de passe</div>
+                    <div class="wifi-field-value">
+                        <span>🔒</span>
+                        <span class="wifi-field-text" id="wifiPassword">{{ wifi.password or '-' }}</span>
+                        <button class="copy-btn" onclick="copyText('{{ wifi.password or '' }}')">📋</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip-card">
+                <div class="tip-icon">💡</div>
+                <div class="tip-text">{{ wifi.notes or 'Le WiFi couvre l\'ensemble du logement.' }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-view" id="detail-address">
+        <div class="status-bar"><span class="status-bar-time">9:41</span></div>
+        <div class="nav-header" style="position: relative;">
+            <button class="nav-back" onclick="closeDetail('address')">‹ Retour</button>
+            <h1>Adresse</h1>
+        </div>
+        <div class="detail-content">
+            <div class="map-container">
+                <div class="map-placeholder">
+                    <div class="map-icon">🗺️</div>
+                    <div>Carte</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-content">
+                    <div style="font-weight: 600; margin-bottom: 8px;">{{ property.name }}</div>
+                    <div style="color: var(--text-secondary); font-size: 14px; line-height: 1.6;" id="fullAddress">
+                        {{ address.street or '' }}<br>
+                        {{ address.postal_code or '' }} {{ address.city or '' }}<br>
+                        {{ address.region or '' }}, {{ address.country or 'France' }}
+                    </div>
+                </div>
+            </div>
+
+            <a href="#" class="contact-button" id="openMapsBtn">
+                <div class="contact-icon blue">🗺️</div>
+                <div class="contact-text">
+                    <div class="contact-title">Ouvrir dans Plans</div>
+                    <div class="contact-subtitle">Navigation GPS</div>
+                </div>
+                <div class="contact-arrow">›</div>
+            </a>
+        </div>
+    </div>
+
+    <div class="detail-view" id="detail-access">
+        <div class="status-bar"><span class="status-bar-time">9:41</span></div>
+        <div class="nav-header" style="position: relative;">
+            <button class="nav-back" onclick="closeDetail('access')">‹ Retour</button>
+            <h1>Clés & Accès</h1>
+        </div>
+        <div class="detail-content">
+            <div class="card">
+                <div class="card-content">
+                    <div style="display: flex; gap: 20px; margin-bottom: 16px;">
+                        <div style="flex: 1;">
+                            <div style="color: #34C759; font-weight: 600;">➡️ Arrivée</div>
+                            <div style="font-size: 18px; font-weight: 700;" id="checkInTime">{{ access.check_in_time or '16:00' }}</div>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="color: #FF9500; font-weight: 600;">⬅️ Départ</div>
+                            <div style="font-size: 18px; font-weight: 700;" id="checkOutTime">{{ access.check_out_time or '10:00' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="font-weight: 600; margin: 16px 0 12px;">Récupération des clés</div>
+
+            <div class="keybox-code">
+                <span class="keybox-icon">🔐</span>
+                <span class="keybox-value" id="keyboxCode">{{ access.keybox_code or '****' }}</span>
+                <button class="copy-btn" onclick="copyText('{{ access.keybox_code or '' }}')">📋</button>
+            </div>
+
+            <div style="color: var(--text-secondary); font-size: 14px; line-height: 1.6; margin-bottom: 16px;" id="accessInstructions">
+                {{ access.instructions or 'La boîte à clés se trouve à l\'entrée principale.' }}
+            </div>
+
+            <div class="access-photos" id="accessPhotos">
+                <!-- Access photos loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-view" id="detail-parking">
+        <div class="status-bar"><span class="status-bar-time">9:41</span></div>
+        <div class="nav-header" style="position: relative;">
+            <button class="nav-back" onclick="closeDetail('parking')">‹ Retour</button>
+            <h1>Parking</h1>
+        </div>
+        <div class="detail-content">
+            <div class="card">
+                <div class="card-content">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                        <span style="font-size: 20px;">{{ '✅' if parking.is_free else '💰' }}</span>
+                        <span style="font-weight: 600;">{{ 'Parking gratuit' if parking.is_free else 'Parking payant' }}</span>
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 14px; line-height: 1.6;" id="parkingInfo">
+                        {{ parking.description or 'Informations de stationnement.' }}
+                    </div>
+                </div>
+            </div>
+
+            {% if parking.notes %}
+            <div class="tip-card">
+                <div class="tip-icon">💡</div>
+                <div class="tip-text">{{ parking.notes }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="detail-view" id="detail-equipements">
+        <div class="status-bar"><span class="status-bar-time">9:41</span></div>
+        <div class="nav-header" style="position: relative;">
+            <button class="nav-back" onclick="closeDetail('equipements')">‹ Retour</button>
+            <h1>Équipements</h1>
+        </div>
+        <div class="detail-content" id="equipementsList">
+            <!-- Equipements loaded dynamically -->
+        </div>
+    </div>
+
+    <div class="detail-view" id="detail-photos">
+        <div class="status-bar"><span class="status-bar-time">9:41</span></div>
+        <div class="nav-header" style="position: relative;">
+            <button class="nav-back" onclick="closeDetail('photos')">‹ Retour</button>
+            <h1>Photos</h1>
+        </div>
+        <div class="detail-content" id="photoGallery">
+            <!-- Photos loaded dynamically -->
+        </div>
+    </div>
+
+    <div class="detail-view" id="detail-emergency">
+        <div class="status-bar"><span class="status-bar-time">9:41</span></div>
+        <div class="nav-header" style="position: relative;">
+            <button class="nav-back" onclick="closeDetail('emergency')">‹ Retour</button>
+            <h1>Urgences</h1>
+        </div>
+        <div class="detail-content" id="emergencyDetail">
+            <!-- Emergency details loaded dynamically -->
+        </div>
+    </div>
+
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+    <script>
+        // Property data from server
+        const propertyData = {{ property_data | tojson | safe }};
+
+        // Update status bar time
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            document.querySelectorAll('.status-bar-time').forEach(el => {
+                el.textContent = `${hours}:${minutes}`;
+            });
+        }
+        updateTime();
+        setInterval(updateTime, 60000);
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-item').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            // Update screens
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(`screen-${tabName}`).classList.add('active');
+        }
+
+        // Detail view management
+        function openDetail(detailName) {
+            document.getElementById(`detail-${detailName}`).classList.add('active');
+        }
+
+        function closeDetail(detailName) {
+            document.getElementById(`detail-${detailName}`).classList.remove('active');
+        }
+
+        // Copy to clipboard
+        function copyText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copié !');
+            });
+        }
+
+        // Generate WiFi QR Code
+        function generateWiFiQR() {
+            const ssid = propertyData.wifi?.ssid || '';
+            const password = propertyData.wifi?.password || '';
+            if (ssid && password) {
+                const wifiString = `WIFI:T:WPA;S:${ssid};P:${password};;`;
+                const canvas = document.getElementById('wifiQRCode');
+                if (canvas && typeof QRCode !== 'undefined') {
+                    QRCode.toCanvas(canvas, wifiString, {
+                        width: 160,
+                        margin: 2,
+                        color: { dark: '#000000', light: '#FFFFFF' }
+                    });
+                }
+            }
+        }
+
+        // Load emergency numbers
+        function loadEmergencyNumbers() {
+            const emergencies = propertyData.emergency_numbers || [
+                { name: 'SAMU', number: '15', icon: '🚑' },
+                { name: 'Pompiers', number: '18', icon: '🚒' },
+                { name: 'Police', number: '17', icon: '👮' },
+                { name: 'Urgences Europe', number: '112', icon: '📞' }
+            ];
+
+            const listHtml = emergencies.map(e => `
+                <div class="info-row" onclick="window.location.href='tel:${e.number}'">
+                    <div class="info-row-icon">${e.icon || '📞'}</div>
+                    <div class="info-row-content">
+                        <div class="info-row-title">${e.name}</div>
+                        <div class="info-row-detail">${e.number}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('emergencyList').innerHTML = listHtml;
+
+            const numbersHtml = emergencies.map(e => `
+                <div class="emergency-row" onclick="window.location.href='tel:${e.number}'">
+                    <span class="emergency-title">${e.name}</span>
+                    <span class="emergency-number">${e.number} 📞</span>
+                </div>
+            `).join('');
+
+            document.getElementById('emergencyNumbers').innerHTML = numbersHtml;
+
+            // Emergency detail view
+            document.getElementById('emergencyDetail').innerHTML = `
+                <div class="section-header">En cas d'urgence</div>
+                <div class="info-list">${listHtml}</div>
+                <div class="tip-card" style="margin-top: 20px;">
+                    <div class="tip-icon">ℹ️</div>
+                    <div class="tip-text">Appuyez sur un numéro pour appeler directement</div>
+                </div>
+            `;
+        }
+
+        // Load services
+        function loadServices() {
+            const services = propertyData.services || [];
+            if (services.length === 0) {
+                document.getElementById('servicesList').innerHTML = '<div class="info-row"><div style="color: var(--text-secondary);">Aucun service configuré</div></div>';
+                return;
+            }
+
+            const html = services.map(s => `
+                <div class="info-row">
+                    <div class="info-row-icon">${s.icon || '📍'}</div>
+                    <div class="info-row-content">
+                        <div class="info-row-title">${s.name}</div>
+                        <div class="info-row-detail">${s.description || s.address || ''}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('servicesList').innerHTML = html;
+        }
+
+        // Load activities
+        function loadActivities() {
+            const activities = propertyData.activities || [];
+            const categories = {};
+
+            activities.forEach(a => {
+                const cat = a.category || 'Autres';
+                if (!categories[cat]) {
+                    categories[cat] = [];
+                }
+                categories[cat].push(a);
+            });
+
+            if (Object.keys(categories).length === 0) {
+                document.getElementById('activitiesList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🎯</div>
+                        <div>Aucune activité configurée</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const categoryIcons = {
+                'Incontournables': '⭐',
+                'Baignade & Kayak': '🏊',
+                'Villes à visiter': '🏛️',
+                'Nature & Randonnées': '🌿',
+                'Marchés': '🛒',
+                'Restaurants': '🍽️',
+                'Spécialités': '🧀',
+                'Autres': '📌'
+            };
+
+            const html = Object.entries(categories).map(([cat, items]) => `
+                <div class="activity-section">
+                    <div class="activity-header" onclick="toggleActivity(this)">
+                        <div class="activity-header-left">
+                            <span class="activity-header-icon">${categoryIcons[cat] || '📌'}</span>
+                            <span class="activity-header-title">${cat}</span>
+                        </div>
+                        <span class="activity-header-chevron expanded">▼</span>
+                    </div>
+                    <div class="activity-items expanded">
+                        ${items.map(item => `
+                            <div class="activity-item">
+                                <span class="activity-item-emoji">${item.emoji || '📍'}</span>
+                                <div class="activity-item-content">
+                                    <div class="activity-item-name">${item.name}</div>
+                                    <div class="activity-item-desc">${item.description || ''}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('activitiesList').innerHTML = html;
+        }
+
+        function toggleActivity(header) {
+            const chevron = header.querySelector('.activity-header-chevron');
+            const items = header.nextElementSibling;
+            chevron.classList.toggle('expanded');
+            items.classList.toggle('expanded');
+        }
+
+        // Load contact buttons
+        function loadContactButtons() {
+            const contact = propertyData.contact || {};
+            const buttons = [];
+
+            if (contact.phone) {
+                buttons.push(`
+                    <a href="tel:${contact.phone}" class="contact-button">
+                        <div class="contact-icon green">📞</div>
+                        <div class="contact-text">
+                            <div class="contact-title">Appeler</div>
+                            <div class="contact-subtitle">${contact.phone}</div>
+                        </div>
+                        <div class="contact-arrow">›</div>
+                    </a>
+                `);
+                buttons.push(`
+                    <a href="sms:${contact.phone}" class="contact-button">
+                        <div class="contact-icon blue">💬</div>
+                        <div class="contact-text">
+                            <div class="contact-title">Envoyer un SMS</div>
+                            <div class="contact-subtitle">Réponse rapide</div>
+                        </div>
+                        <div class="contact-arrow">›</div>
+                    </a>
+                `);
+                buttons.push(`
+                    <a href="https://wa.me/${contact.phone.replace(/[^0-9]/g, '')}" class="contact-button" target="_blank">
+                        <div class="contact-icon whatsapp">💬</div>
+                        <div class="contact-text">
+                            <div class="contact-title">WhatsApp</div>
+                            <div class="contact-subtitle">Disponible 7j/7</div>
+                        </div>
+                        <div class="contact-arrow">›</div>
+                    </a>
+                `);
+            }
+
+            if (contact.email) {
+                buttons.push(`
+                    <a href="mailto:${contact.email}" class="contact-button">
+                        <div class="contact-icon orange">✉️</div>
+                        <div class="contact-text">
+                            <div class="contact-title">Email</div>
+                            <div class="contact-subtitle">${contact.email}</div>
+                        </div>
+                        <div class="contact-arrow">›</div>
+                    </a>
+                `);
+            }
+
+            if (buttons.length === 0) {
+                buttons.push('<div class="empty-state"><div class="empty-icon">📞</div><div>Aucun contact configuré</div></div>');
+            }
+
+            document.getElementById('contactButtons').innerHTML = buttons.join('');
+        }
+
+        // Load equipements
+        function loadEquipements() {
+            const amenities = propertyData.amenities || [];
+            if (amenities.length === 0) {
+                document.getElementById('equipementsList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🛋️</div>
+                        <div>Aucun équipement configuré</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const categories = {};
+            amenities.forEach(a => {
+                const cat = a.category || 'Autres';
+                if (!categories[cat]) categories[cat] = [];
+                categories[cat].push(a);
+            });
+
+            const html = Object.entries(categories).map(([cat, items]) => `
+                <div class="section-header">${cat}</div>
+                <div class="info-list">
+                    ${items.map(item => `
+                        <div class="info-row">
+                            <div class="info-row-icon">${item.icon || '✓'}</div>
+                            <div class="info-row-content">
+                                <div class="info-row-title">${item.name}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('');
+
+            document.getElementById('equipementsList').innerHTML = html;
+        }
+
+        // Load photos
+        function loadPhotos() {
+            const photos = propertyData.photos || [];
+            if (photos.length === 0) {
+                document.getElementById('photoGallery').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📷</div>
+                        <div>Aucune photo disponible</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = photos.map(p => `
+                <img src="/static/uploads/photos/${p.filename}" alt="${p.title || 'Photo'}"
+                     style="width: 100%; border-radius: 12px; margin-bottom: 12px; cursor: pointer;"
+                     onclick="alert('Zoom photo')">
+            `).join('');
+
+            document.getElementById('photoGallery').innerHTML = html;
+        }
+
+        // Load access photos
+        function loadAccessPhotos() {
+            const photos = propertyData.access_photos || [];
+            if (photos.length === 0) return;
+
+            const html = photos.map(p => `
+                <img src="/static/uploads/photos/${p.filename}" alt="${p.title || 'Photo accès'}" class="access-photo">
+            `).join('');
+
+            document.getElementById('accessPhotos').innerHTML = html;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            generateWiFiQR();
+            loadEmergencyNumbers();
+            loadServices();
+            loadActivities();
+            loadContactButtons();
+            loadEquipements();
+            loadPhotos();
+            loadAccessPhotos();
+
+            // Set maps link
+            const address = propertyData.address;
+            if (address) {
+                const fullAddr = `${address.street || ''}, ${address.city || ''}, ${address.country || 'France'}`;
+                document.getElementById('openMapsBtn').href = `https://maps.google.com/?q=${encodeURIComponent(fullAddr)}`;
+            }
+        });
+    </script>
+</body>
+</html>

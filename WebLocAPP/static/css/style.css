@@ -187,6 +187,39 @@ body {
     opacity: 0.7;
 }
 
+/* Account Section (Mon Compte) */
+.sidebar-account-section {
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--light-color);
+}
+
+.account-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--accent-light);
+    color: var(--dark-color);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    border: 1px solid var(--light-color);
+}
+
+.account-link:hover {
+    background: var(--light-color);
+    border-color: var(--primary-color);
+}
+
+.account-icon {
+    font-size: 1.2rem;
+}
+
+.account-text {
+    font-size: 0.95rem;
+}
+
 /* Navigation Section */
 .sidebar-nav-section {
     flex: 1;
