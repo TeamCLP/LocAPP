@@ -35,4 +35,4 @@ echo ""
 echo "💡 Appuyez sur CTRL+C pour arrêter le serveur"
 echo ""
 
-python run-prod.py
+python run_prod.py
